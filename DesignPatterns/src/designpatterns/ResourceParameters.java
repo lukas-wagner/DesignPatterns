@@ -11,35 +11,37 @@ public class ResourceParameters {
 	String relevantEnergyCarrier; 
 	/** The min/max power input. */
 	double minPowerInput; 
-	double maxPowerInput; 
-	
+	double maxPowerInput = Double.MAX_VALUE; 
+
 	/** The min/max power output. */
 	double minPowerOutput;
-	double maxPowerOutput;
-	
+	double maxPowerOutput = Double.MAX_VALUE;
+
 	/** The min/max ramp. */
 	double minRamp; 
 	double maxRamp;
-	
-	
+
+	List<SystemState> systemStates = new ArrayList<SystemState>();
+	int numberOfSystemStates;
+
 	/** Efficiencies/IO Relation */
 	double efficiency; 
 	double slope, intercept; 
-	
+
 	List<PiecewiseLinearApproximation> pla = new ArrayList<PiecewiseLinearApproximation>();
 	int numberOfLinearSegments; 
-	
-	
+
+
 	/** Storage Specific parameters */
 	boolean isStorage = false; 
 	double maximumStorageCapacity;
 	double minimumStorageCapacity; 
 	double initalCapacity; 
 	double staticPowerLoss;
-	double efficiencyInputStorage; 
-	double efficiencyOutputStorage; 
+	double efficiencyInputStorage = 1; 
+	double efficiencyOutputStorage = 1; 
 	double efficiencyOutputReciprocal = 1/efficiencyOutputStorage;
-	
+
 	/**
 	 * Creates the pla list from arguments.
 	 *
@@ -54,9 +56,56 @@ public class ResourceParameters {
 		plaItem.setSlope(slopepla);
 		plaItem.setUpperBound(upperboundpla);
 		plaItem.setLowerBound(lowerboundpla);
-		pla.add(plaItem);
+		this.pla.add(plaItem);
+	}
+
+	
+	/**
+	 * Adds the system state.
+	 *
+	 * @param stateID the state ID
+	 * @param stateName the state name
+	 * @param minHoldingDuration the min holding duration
+	 * @param maxHoldingDuration the max holding duration
+	 * @param idsOfFollowerStates the ids of follower states
+	 * @param minPowerState the min power state
+	 * @param maxPowerState the max power state
+	 */
+	public void addSystemState (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState) {
+		SystemState state = new SystemState();
+		state.setStateID(stateID);
+		state.setStateName(stateName);
+		state.setMinStateDuration(minHoldingDuration);
+		state.setMaxStateDuration(maxHoldingDuration);
+		state.setFollowerStates(idsOfFollowerStates);
+		state.setMinPower(minPowerState);
+		state.setMaxPower(maxPowerState);
+		this.systemStates.add(state);
 	}
 	
+	/**
+	 * Adds the system state.
+	 *
+	 * @param stateID the state ID
+	 * @param stateName the state name
+	 * @param minHoldingDuration the min holding duration
+	 * @param maxHoldingDuration the max holding duration
+	 * @param idsOfFollowerStates the ids of follower states
+	 * @param minPowerState the min power state
+	 * @param maxPowerState the max power state
+	 */
+	public void addSystemStateWithMaxPowerOutput (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState, double maxPowerOutputState) {
+		SystemState state = new SystemState();
+		state.setStateID(stateID);
+		state.setStateName(stateName);
+		state.setMinStateDuration(minHoldingDuration);
+		state.setMaxStateDuration(maxHoldingDuration);
+		state.setFollowerStates(idsOfFollowerStates);
+		state.setMinPower(minPowerState);
+		state.setMaxPower(maxPowerState);
+		state.setMaxPowerOutput(maxPowerOutputState);
+		this.systemStates.add(state);
+	}
 	/**
 	 * Gets the min power.
 	 *
@@ -378,6 +427,38 @@ public class ResourceParameters {
 	 */
 	public void setEfficiencyOutputReciprocal(double efficiencyOutputReciprocal) {
 		this.efficiencyOutputReciprocal = efficiencyOutputReciprocal;
+	}
+
+
+	/**
+	 * @return the systemStates
+	 */
+	public List<SystemState> getSystemStates() {
+		return systemStates;
+	}
+
+
+	/**
+	 * @param systemStates the systemStates to set
+	 */
+	public void setSystemStates(List<SystemState> systemStates) {
+		this.systemStates = systemStates;
+	}
+
+
+	/**
+	 * @return the numberOfSystemStates
+	 */
+	public int getNumberOfSystemStates() {
+		return numberOfSystemStates;
+	}
+
+
+	/**
+	 * @param numberOfSystemStates the numberOfSystemStates to set
+	 */
+	public void setNumberOfSystemStates(int numberOfSystemStates) {
+		this.numberOfSystemStates = numberOfSystemStates;
 	} 
 
 }
