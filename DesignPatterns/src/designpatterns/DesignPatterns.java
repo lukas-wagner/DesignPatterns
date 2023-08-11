@@ -13,12 +13,13 @@ public class DesignPatterns {
 
 	static double[] solvingTimes = new double [4]; 
 	static List<ResourceParameters> resourceParameters = new ArrayList<>();
-
+	static double NOLIMIT = 9999;
+	
 	public static void main(String[] args) {
 		double timeInterval = 0.25; // 0.05 = 3Minuten, 0.125 = 7.5 Minuten
 		int timeIntervalInMinutes = (int) (timeInterval*60); 
 
-		int arrayLength = 20; // select price length
+		int arrayLength = 200; // select price length
 		double[] electricityPrice = getElectricityPrice(arrayLength);
 
 		// parameters
@@ -32,8 +33,9 @@ public class DesignPatterns {
 		resource1.setMaxPowerOutput(1000);
 		double maxRampPerMinute = 0.05;
 		resource1.setMaxRamp(maxRampPerMinute*timeInterval*60*maxPowerEl);
-
-		resource1.createPlaList(21.997,-26.36,0.01,10.6091); // kg/h
+		
+		resource1.createPlaList(0,0,0,7); // kg/h
+		resource1.createPlaList(21.997,-26.36,7,10.6091); // kg/h
 		resource1.createPlaList(20.754,-13.173,10.6091,13.31882);
 		resource1.createPlaList(19.782,-0.23309,13.31882,16.59741);
 		resource1.createPlaList(18.787,16.289,16.59741,20.78419);
@@ -52,9 +54,10 @@ public class DesignPatterns {
 		resource1.setSlope(17.5);
 		resource1.setIntercept(29);
 
-		resource1.addSystemStateWithMaxPowerOutput(0, "off", 0, 9999, new int[] {1}, 0, 0, 0);
-		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7, 0);
-		resource1.addSystemState(2, "operation", 2, 9999, new int[] {0}, 7, maxPowerEl);
+		resource1.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
+		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 0, 2, new int[] {2}, 0, 7, 0);
+		resource1.addSystemState(2, "operation", 0, NOLIMIT, new int[] {0,3}, 7, maxPowerEl);
+		resource1.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {0,2}, 7,7, 0);
 		resource1.setNumberOfSystemStates(resource1.getSystemStates().size());
 		// add object to Array List
 		resourceParameters.add(resource1);		
@@ -74,7 +77,7 @@ public class DesignPatterns {
 		resource3.setEfficiencyOutputStorage(1);
 		resource3.setInitalCapacity(500);
 		resource3.setMaximumStorageCapacity(2000);
-		resource3.setStaticPowerLoss(0);
+		resource3.setStaticPowerLoss(1);
 		resourceParameters.add(resource3);
 
 		System.out.println("size resourceParameters "+ resourceParameters.size());
@@ -246,76 +249,43 @@ public class DesignPatterns {
 			//			}
 
 
-			// --------------------- System state ----------------------------------
-
+			// --------------------- System state by power limits ----------------------------------
 			for (int i = 0; i < arrayLength; i++) {
-
 				cplex.addEq(cplex.sum(statesIntArrayElectrolyzer1[i]), 1);
 
 				IloNumExpr powerMinSum = cplex.numExpr();
 				IloNumExpr powerMaxSum = cplex.numExpr();
+				IloNumExpr powerOutputMaxSum = cplex.numExpr();
 				for (int j = 0; j < resourceParameters.get(0).getNumberOfSystemStates(); j++) {
 					powerMinSum = cplex.sum(powerMinSum, cplex.prod(statesIntArrayElectrolyzer1[i][j], resourceParameters.get(0).getSystemStates().get(j).getMinPower()));
 					powerMaxSum = cplex.sum(powerMaxSum, cplex.prod(statesIntArrayElectrolyzer1[i][j], resourceParameters.get(0).getSystemStates().get(j).getMaxPower()));
+					powerOutputMaxSum = cplex.sum(powerOutputMaxSum, cplex.prod(statesIntArrayElectrolyzer1[i][j], resourceParameters.get(0).getSystemStates().get(j).getMaxPowerOutput()));
+
 				}
 				cplex.addGe(powerInputElectrolyzer1[i], powerMinSum);
 				cplex.addLe(powerInputElectrolyzer1[i], powerMaxSum);
-
-				/**
-				for (int j = 0; j < resourceParameters.get(0).getNumberOfSystemStates(); j++) {
-					cplex.addLe(powerInputElectrolyzer1[i], cplex.prod(statesIntArrayElectrolyzer1[i][j],  resourceParameters.get(0).getSystemStates().get(j).getMaxPower()));
-					cplex.addGe(powerInputElectrolyzer1[i], cplex.prod(statesIntArrayElectrolyzer1[i][j],  resourceParameters.get(0).getSystemStates().get(j).getMinPower()));
-					System.out.println(j + " min " + resourceParameters.get(0).getSystemStates().get(j).getMinPower() + " max " + resourceParameters.get(0).getSystemStates().get(j).getMaxPower());
-				}
-				for (int j = 0; j < resourceParameters.get(0).getNumberOfSystemStates(); j++) {
-					cplex.add(cplex.ifThen(
-							cplex.eq(statesIntArrayElectrolyzer1[i][j],1), 
-							cplex.and(
-									cplex.and(
-											cplex.ge(powerInputElectrolyzer1[i], 
-													resourceParameters.get(0).getSystemStates().get(j).getMinPower()
-													), 
-											cplex.le(powerInputElectrolyzer1[i], 
-													resourceParameters.get(0).getSystemStates().get(j).getMaxPower()
-													)
-											),
-									cplex.le(powerOutputElectrolyzer1[i], 
-											resourceParameters.get(0).getSystemStates().get(j).getMaxPowerOutput()
-											) 							
-									)
-							)
-							);
-				 */
-
-				//					// operating state = power output > 0
-				//					// other states = power output == 0
-				//					cplex.add(cplex.ifThen(
-				//							cplex.eq(statesIntArrayElectrolyzer1[i][1],0), 
-				//							)
-				//							);
+				cplex.addLe(powerOutputElectrolyzer1[i], powerOutputMaxSum);
 			}
 
 
-			//			cplex.addEq(powerInput[10], 0);
 
-
-			/**
+			
 			// --------------------- State sequences and holding duration ----------------------------------
 
 			// initial state	
 			//Constraints nur für Zeitpunkt 0: Zustand 0 = 1, alle anderen 0, start in state = off 
-
-			cplex.addEq(statesIntArrayElectrolyzer1[0][0], 1);
-			cplex.addEq(cplex.sum(statesIntArrayElectrolyzer1[0]), 1);
+//
+//			cplex.addEq(statesIntArrayElectrolyzer1[0][0], 1);
+//			cplex.addEq(cplex.sum(statesIntArrayElectrolyzer1[0]), 1);
 
 			for (int i = 1; i < arrayLength; i++) {
 
 				// only one active state per time step
-				cplex.addEq(cplex.sum(statesIntArrayElectrolyzer1[i]), 1);
+//				cplex.addEq(cplex.sum(statesIntArrayElectrolyzer1[i]), 1);
 
 				for (int s = 0; s < resourceParameters.get(0).getNumberOfSystemStates(); s++) {
 					// min duration
-					if (resourceParameters.get(0).getSystemStates().get(s).getMinStateDuration() == 99999.0) {
+					if (resourceParameters.get(0).getSystemStates().get(s).getMinStateDuration() == NOLIMIT) {
 
 					}else{
 						IloNumExpr constraintLeftSide = cplex.diff(statesIntArrayElectrolyzer1[i][s],statesIntArrayElectrolyzer1[i-1][s]);
@@ -335,7 +305,7 @@ public class DesignPatterns {
 						cplex.addLe(cplex.prod(constraintLeftSide, Math.min(counter, resourceParameters.get(0).getSystemStates().get(s).getMinStateDuration())), constraintRightSide);
 					}
 					//max Duration
-					if (resourceParameters.get(0).getSystemStates().get(s).getMaxStateDuration() == 99999) {
+					if (resourceParameters.get(0).getSystemStates().get(s).getMaxStateDuration() == NOLIMIT) {
 
 					}else{
 						IloNumExpr constraintLeftSide = statesIntArrayElectrolyzer1[i][s];
@@ -363,7 +333,6 @@ public class DesignPatterns {
 					cplex.addLe(constraintLeftSide, constraintRightSide);
 				}
 			}
-			 */
 
 			// --------------------- storage and loss ----------------------------------
 			for (int i = 0; i < arrayLength+1; i++) {
@@ -384,8 +353,8 @@ public class DesignPatterns {
 							);
 				}
 			}
-			cplex.addLe(stateOfCharge[arrayLength], 200);
-			cplex.addGe(stateOfCharge[arrayLength], 100);
+//			cplex.addLe(stateOfCharge[arrayLength], 200);
+//			cplex.addGe(stateOfCharge[arrayLength], 100);
 			//			----------------------------------
 
 
@@ -423,11 +392,12 @@ public class DesignPatterns {
 					optimizationResults[i][12] = cplex.getValue(powerOutputElectrolyzer1[i-1]);
 					optimizationResults[i][13] = cplex.getValue(statesIntArrayElectrolyzer1[i-1][0]);
 					optimizationResults[i][14] = cplex.getValue(statesIntArrayElectrolyzer1[i-1][1]);
-					optimizationResults[i][15] = cplex.getValue(statesIntArrayElectrolyzer1[i-1][3]);
-					optimizationResults[i][16] = electricityPrice[i-1];
+					optimizationResults[i][15] = cplex.getValue(statesIntArrayElectrolyzer1[i-1][2]);
+					optimizationResults[i][16] = cplex.getValue(statesIntArrayElectrolyzer1[i-1][3]);
+					optimizationResults[i][17] = electricityPrice[i-1];
 				}
 
-				writeResultsToFile(optimizationResults, "designpatterns", "stateOfCharge, powerInput, binary1, binary2, binary3, binary4, binary5, binary6, binary7, binary8, binary9, binary10, powerOutput, systemState1, systemState2, electricityPrice");
+				writeResultsToFile(optimizationResults, "designpatterns", "stateOfCharge, powerInput, binary1, binary2, binary3, binary4, binary5, binary6, binary7, binary8, binary9, binary10, powerOutput, systemState1, systemState2,systemState3, systemState4, electricityPrice");
 
 			} else {
 				System.out.println("Model not solved");
