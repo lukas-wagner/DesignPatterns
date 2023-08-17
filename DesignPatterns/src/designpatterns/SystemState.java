@@ -12,6 +12,8 @@ public class SystemState {
 	double maxPowerOutput = Double.MAX_VALUE;
 	double minRamp;
 	double maxRamp = Double.MAX_VALUE;
+//	double maxRamp = 90;
+
 	
 	public SystemState(int a, double b, double c, int[] d) {
 		stateID = a;

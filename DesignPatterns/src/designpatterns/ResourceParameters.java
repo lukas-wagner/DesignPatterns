@@ -291,7 +291,6 @@ public class ResourceParameters {
 
 
 
-
 	/**
 	 * @return the numberOfLinearSegments
 	 */
