@@ -10,6 +10,8 @@ public class SystemState {
 	double minPower; 
 	double maxPower; 
 	double maxPowerOutput = Double.MAX_VALUE;
+	double minRamp;
+	double maxRamp = Double.MAX_VALUE;
 	
 	public SystemState(int a, double b, double c, int[] d) {
 		stateID = a;
@@ -102,4 +104,33 @@ public class SystemState {
 	public void setMaxPowerOutput(double maxPowerOutput) {
 		this.maxPowerOutput = maxPowerOutput;
 	}
+
+	/**
+	 * @return the minRamp
+	 */
+	public double getMinRamp() {
+		return minRamp;
+	}
+
+	/**
+	 * @param minRamp the minRamp to set
+	 */
+	public void setMinRamp(double minRamp) {
+		this.minRamp = minRamp;
+	}
+
+	/**
+	 * @return the maxRamp
+	 */
+	public double getMaxRamp() {
+		return maxRamp;
+	}
+
+	/**
+	 * @param maxRamp the maxRamp to set
+	 */
+	public void setMaxRamp(double maxRamp) {
+		this.maxRamp = maxRamp;
+	}
+
 }

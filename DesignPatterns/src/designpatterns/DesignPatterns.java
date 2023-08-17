@@ -11,15 +11,16 @@ import ilog.cplex.*;
 
 public class DesignPatterns {
 
+	//	private	IloCplex cplex = null; 
 	static double[] solvingTimes = new double [4]; 
 	static List<ResourceParameters> resourceParameters = new ArrayList<>();
 	static double NOLIMIT = 9999;
-	
-	public static void main(String[] args) {
+
+	public static void main(String[] args) throws IloException {
 		double timeInterval = 0.25; // 0.05 = 3Minuten, 0.125 = 7.5 Minuten
 		int timeIntervalInMinutes = (int) (timeInterval*60); 
 
-		int arrayLength = 200; // select price length
+		int arrayLength = 20; // select price length
 		double[] electricityPrice = getElectricityPrice(arrayLength);
 
 		// parameters
@@ -33,7 +34,7 @@ public class DesignPatterns {
 		resource1.setMaxPowerOutput(1000);
 		double maxRampPerMinute = 0.05;
 		resource1.setMaxRamp(maxRampPerMinute*timeInterval*60*maxPowerEl);
-		
+
 		resource1.createPlaList(0,0,0,7); // kg/h
 		resource1.createPlaList(21.997,-26.36,7,10.6091); // kg/h
 		resource1.createPlaList(20.754,-13.173,10.6091,13.31882);
@@ -49,15 +50,16 @@ public class DesignPatterns {
 
 		resource1.setNumberOfLinearSegments(resource1.getPla().size());
 
-//		resource1.setNumberOfLinearSegments(0);
+		//		resource1.setNumberOfLinearSegments(0);
 		resource1.setEfficiency(18.8);
 		resource1.setSlope(17.5);
 		resource1.setIntercept(29);
 
 		resource1.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
-		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 0, 2, new int[] {2}, 0, 7, 0);
-		resource1.addSystemState(2, "operation", 0, NOLIMIT, new int[] {0,3}, 7, maxPowerEl);
-		resource1.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {0,2}, 7,7, 0);
+		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7, 0);
+		resource1.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7, maxPowerEl);
+		resource1.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 7,7, 0);
+		resource1.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
 		resource1.setNumberOfSystemStates(resource1.getSystemStates().size());
 		// add object to Array List
 		resourceParameters.add(resource1);		
@@ -77,7 +79,7 @@ public class DesignPatterns {
 		resource3.setEfficiencyOutputStorage(1);
 		resource3.setInitalCapacity(500);
 		resource3.setMaximumStorageCapacity(2000);
-		resource3.setStaticPowerLoss(1);
+		resource3.setStaticPowerLoss(100);
 		resourceParameters.add(resource3);
 
 		System.out.println("size resourceParameters "+ resourceParameters.size());
@@ -91,14 +93,14 @@ public class DesignPatterns {
 
 
 
-	public static void optimizationModel(double timeInterval, int arrayLength, double[] electricityPrice, 	double optimalityGap) {
+	public static void optimizationModel(double timeInterval, int arrayLength, double[] electricityPrice, 	double optimalityGap) throws IloException {
 		try {
 			@SuppressWarnings("resource")
 			IloCplex cplex = new IloCplex();
 
 			//			additional parameters for system
 			double maxPowerSystem = 100; 
-			double constantHydrogenDemand = 500*timeInterval;
+			double constantHydrogenDemand = 900*timeInterval;
 
 			//-------------------------------------------------------------------- Decision Variables --------------------------------------------------------------------
 			// RESOURCE 1 - Electrolyzer 1
@@ -121,6 +123,8 @@ public class DesignPatterns {
 				binariesPlaElectrolyzer1[i] = cplex.intVarArray(arrayLength, 0 ,1);
 				powerInputElectrolyzer1LinearSegments[i] = cplex.numVarArray(arrayLength,resourceParameters.get(0).getMinPowerInput(), resourceParameters.get(0).getMaxPowerInput());
 			}
+
+			IloIntVar[] binaryVariableForAbsoluteDifferenceEl1 =  cplex.intVarArray(arrayLength, 0 ,1); 
 
 			IloNumVar[] combinedHydrogenOutput = cplex.numVarArray(arrayLength,  0 ,  Double.MAX_VALUE);
 
@@ -239,14 +243,53 @@ public class DesignPatterns {
 
 
 
+			System.out.println("created variable");
+			cplex.addEq(binaryVariableForAbsoluteDifferenceEl1[0], 0);
+			double M = 10*resourceParameters.get(0).getMaxPowerInput();
+			// --------------------- ramp limits ----------------------------------
+			for (int i = 1; i < arrayLength; i++) {
+				//				TODO was ist für das erste Intervall? -> pI[0] <= rampmax, pi[0]>=rampmin
+				IloNumExpr sumMinRamp = cplex.numExpr();
+				IloNumExpr sumMaxRamp = cplex.numExpr();
+				IloNumExpr powerDifferenceEl1 = cplex.numExpr();
 
+				powerDifferenceEl1 = cplex.diff(powerInputElectrolyzer1[i], powerInputElectrolyzer1[i-1]);
 
-			//			// --------------------- ramp limits ----------------------------------
-			//			for (int i = 1; i < arrayLength; i++) {
-			//				//				TODO was ist für das erste Intervall? 
-			//				cplex.addGe(cplex.diff(powerInputElectrolyzer1[i], powerInputElectrolyzer1[i-1]), resourceParameters.get(0).getMinRamp());
-			//				cplex.addLe(cplex.diff(powerInputElectrolyzer1[i], powerInputElectrolyzer1[i-1]), resourceParameters.get(0).getMaxRamp());
-			//			}
+				// absolute value of difference of powerInput of two succeeding time steps
+				//				cplex.addLe(cplex.diff(powerInputElectrolyzer1[i], powerInputElectrolyzer1[i-1]), cplex.prod(M, binaryVariableForAbsoluteDifferenceEl1[i]));
+				cplex.addLe(cplex.diff(powerInputElectrolyzer1[i], powerInputElectrolyzer1[i-1]), cplex.prod(M, cplex.diff(1.0, binaryVariableForAbsoluteDifferenceEl1[i])));
+				System.out.println("added binary constraints");
+				for (int j = 0; j < resourceParameters.get(0).getNumberOfSystemStates(); j++) {
+					sumMinRamp = cplex.sum(sumMinRamp, cplex.prod(statesIntArrayElectrolyzer1[i][j], resourceParameters.get(0).getSystemStates().get(j).getMinRamp()));
+					sumMaxRamp = cplex.sum(sumMaxRamp, cplex.prod(statesIntArrayElectrolyzer1[i][j], resourceParameters.get(0).getSystemStates().get(j).getMaxRamp()));
+					System.out.println("added ramp constraints by state " + j);
+				}
+
+				cplex.add(
+						cplex.ifThen(
+								cplex.eq(binaryVariableForAbsoluteDifferenceEl1[i], 1),
+								cplex.and(
+										cplex.ge(powerDifferenceEl1, cplex.prod(timeInterval, sumMinRamp)),
+										cplex.le(powerDifferenceEl1, cplex.prod(timeInterval, sumMaxRamp))
+										)
+								)
+						);
+				System.out.println("added constraint for i<i-1");
+
+				cplex.add(
+						cplex.ifThen(
+								cplex.eq(binaryVariableForAbsoluteDifferenceEl1[i], 0),
+								cplex.and(
+										cplex.ge(cplex.prod(-1, powerDifferenceEl1), cplex.prod(timeInterval, sumMinRamp)),
+										cplex.le(cplex.prod(-1, powerDifferenceEl1), cplex.prod(timeInterval, sumMaxRamp))
+										)
+								)
+						);
+				System.out.println("added constraint for i>i-1");
+				//				cplex.addGe(absoluteValueForRampElectrolyzer1[i], cplex.prod(timeInterval, sumMinRamp));
+				//				cplex.addLe(absoluteValueForRampElectrolyzer1[i], cplex.prod(timeInterval, sumMaxRamp));
+
+			}
 
 
 			// --------------------- System state by power limits ----------------------------------
@@ -269,19 +312,19 @@ public class DesignPatterns {
 
 
 
-			
+
 			// --------------------- State sequences and holding duration ----------------------------------
 
 			// initial state	
 			//Constraints nur für Zeitpunkt 0: Zustand 0 = 1, alle anderen 0, start in state = off 
-//
-//			cplex.addEq(statesIntArrayElectrolyzer1[0][0], 1);
-//			cplex.addEq(cplex.sum(statesIntArrayElectrolyzer1[0]), 1);
+			//
+			//			cplex.addEq(statesIntArrayElectrolyzer1[0][0], 1);
+			//			cplex.addEq(cplex.sum(statesIntArrayElectrolyzer1[0]), 1);
 
 			for (int i = 1; i < arrayLength; i++) {
 
 				// only one active state per time step
-//				cplex.addEq(cplex.sum(statesIntArrayElectrolyzer1[i]), 1);
+				//				cplex.addEq(cplex.sum(statesIntArrayElectrolyzer1[i]), 1);
 
 				for (int s = 0; s < resourceParameters.get(0).getNumberOfSystemStates(); s++) {
 					// min duration
@@ -353,11 +396,6 @@ public class DesignPatterns {
 							);
 				}
 			}
-//			cplex.addLe(stateOfCharge[arrayLength], 200);
-//			cplex.addGe(stateOfCharge[arrayLength], 100);
-			//			----------------------------------
-
-
 
 			//	System.out.println(cplex);
 			cplex.exportModel("model.lp");
@@ -373,7 +411,7 @@ public class DesignPatterns {
 			//cplex.setParam(IloCplex.Param.Emphasis.Numerical, true);
 			cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, optimalityGap);
 			long start = System.currentTimeMillis();
-
+			System.out.println("cplex solve");
 			if (cplex.solve()) {
 				long end = System.currentTimeMillis();
 				long solvingTime = 	(end - start);
@@ -394,10 +432,13 @@ public class DesignPatterns {
 					optimizationResults[i][14] = cplex.getValue(statesIntArrayElectrolyzer1[i-1][1]);
 					optimizationResults[i][15] = cplex.getValue(statesIntArrayElectrolyzer1[i-1][2]);
 					optimizationResults[i][16] = cplex.getValue(statesIntArrayElectrolyzer1[i-1][3]);
-					optimizationResults[i][17] = electricityPrice[i-1];
+					optimizationResults[i][17] = cplex.getValue(statesIntArrayElectrolyzer1[i-1][4]);
+					optimizationResults[i][18] = electricityPrice[i-1];
+					System.out.println(cplex.getValue(binaryVariableForAbsoluteDifferenceEl1[i-1]));
+					//					optimizationResults[i][19] = cplex.getValue(binaryVariableForAbsoluteDifferenceEl1[i-1]);
 				}
 
-				writeResultsToFile(optimizationResults, "designpatterns", "stateOfCharge, powerInput, binary1, binary2, binary3, binary4, binary5, binary6, binary7, binary8, binary9, binary10, powerOutput, systemState1, systemState2,systemState3, systemState4, electricityPrice");
+				writeResultsToFile(optimizationResults, "designpatterns", "stateOfCharge, powerInput, binary1, binary2, binary3, binary4, binary5, binary6, binary7, binary8, binary9, binary10, powerOutput, systemState1, systemState2,systemState3, systemState4, systemState5, electricityPrice, absoluteValueForRampElectrolyzer1");
 
 			} else {
 				System.out.println("Model not solved");
@@ -407,6 +448,10 @@ public class DesignPatterns {
 		catch (IloException exc) {
 			exc.printStackTrace();
 		}
+	}
+
+	private static void generateInputOutputRelationship (IloNumVar[] powerInputResource, IloNumVar[] powerOutputResource, IloIntVar[][] binariesPlaResource, IloNumVar[][] powerInputResourceLinearSegments) throws IloException {
+
 	}
 
 
@@ -463,4 +508,21 @@ public class DesignPatterns {
 		}
 
 	}
+
+
+
+	/**
+	 * @return the cplex
+
+	public IloCplex getCplex() {
+		if(cplex==null) {
+			try {
+				cplex = new IloCplex();
+			} catch (IloException e) {
+				e.printStackTrace();
+			}
+		}
+		return cplex;
+	}
+	 */
 }

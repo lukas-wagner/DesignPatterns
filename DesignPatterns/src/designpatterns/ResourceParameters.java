@@ -82,7 +82,19 @@ public class ResourceParameters {
 		state.setMaxPower(maxPowerState);
 		this.systemStates.add(state);
 	}
-	
+	public void addSystemStateWithRamp (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState, double minRampState, double maxRampState) {
+		SystemState state = new SystemState();
+		state.setStateID(stateID);
+		state.setStateName(stateName);
+		state.setMinStateDuration(minHoldingDuration);
+		state.setMaxStateDuration(maxHoldingDuration);
+		state.setFollowerStates(idsOfFollowerStates);
+		state.setMinPower(minPowerState);
+		state.setMaxPower(maxPowerState);
+		state.setMinRamp(minRampState);
+		state.setMaxRamp(maxRampState);
+		this.systemStates.add(state);
+	}
 	/**
 	 * Adds the system state.
 	 *
@@ -104,6 +116,35 @@ public class ResourceParameters {
 		state.setMinPower(minPowerState);
 		state.setMaxPower(maxPowerState);
 		state.setMaxPowerOutput(maxPowerOutputState);
+		this.systemStates.add(state);
+	}
+	
+	/**
+	 * Adds the system state with max power output and ramp.
+	 *
+	 * @param stateID the state ID
+	 * @param stateName the state name
+	 * @param minHoldingDuration the min holding duration
+	 * @param maxHoldingDuration the max holding duration
+	 * @param idsOfFollowerStates the ids of follower states
+	 * @param minPowerState the min power state
+	 * @param maxPowerState the max power state
+	 * @param maxPowerOutputState the max power output state
+	 * @param minRamp the min ramp
+	 * @param maxRamp the max ramp
+	 */
+	public void addSystemStateWithMaxPowerOutputAndRamp (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState, double maxPowerOutputState, double minRampState, double maxRampState) {
+		SystemState state = new SystemState();
+		state.setStateID(stateID);
+		state.setStateName(stateName);
+		state.setMinStateDuration(minHoldingDuration);
+		state.setMaxStateDuration(maxHoldingDuration);
+		state.setFollowerStates(idsOfFollowerStates);
+		state.setMinPower(minPowerState);
+		state.setMaxPower(maxPowerState);
+		state.setMaxPowerOutput(maxPowerOutputState);
+		state.setMinRamp(minRampState);
+		state.setMaxRamp(maxRampState);
 		this.systemStates.add(state);
 	}
 	/**
