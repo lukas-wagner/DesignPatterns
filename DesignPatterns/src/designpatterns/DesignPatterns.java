@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.IllformedLocaleException;
 import java.util.List;
 
 import ilog.concert.*;
@@ -28,7 +29,6 @@ public class DesignPatterns {
 	/** The resource parameters. */
 	static List<ResourceParameters> resourceParameters = new ArrayList<>();
 
-
 	/** The array length. */
 	static int arrayLength; 
 
@@ -40,8 +40,13 @@ public class DesignPatterns {
 
 	/** The nolimit. */
 	private static final double NOLIMIT = 9999;
+
+	/** The Constant INPUT. */
 	private static final String INPUT = "Input";
+
+	/** The Constant OUTPUT. */
 	private static final String OUTPUT = "Output";
+
 	/**
 	 * The main method.
 	 *
@@ -55,7 +60,7 @@ public class DesignPatterns {
 	}
 
 	/**
-	 * Sets the optimization parameters, primarily in ResourceParameters resourceParameters
+	 * Sets the optimization parameters, primarily in ResourceParameters resourceParameters.
 	 */
 	public static void setOptimizationParameters () {
 		setOptimalityGap(0.001); // default 10e-4
@@ -71,8 +76,6 @@ public class DesignPatterns {
 		double maxPowerEl = 50; // MW
 		resource1.setMaxPowerInput(maxPowerEl);
 		resource1.setMaxPowerOutput(1000);
-		double maxRampPerMinute = 0.05;
-		resource1.setMaxRamp(maxRampPerMinute*timeInterval*60*maxPowerEl);
 
 		resource1.createPlaList(0,0,0,7); // kg/h
 		resource1.createPlaList(21.997,-26.36,7,10.6091); // kg/h
@@ -109,7 +112,6 @@ public class DesignPatterns {
 		resource2.setMinPowerOutput(0);
 		resource2.setMaxPowerInput(maxPowerEl);
 		resource2.setMaxPowerOutput(1000);
-		resource2.setMaxRamp(maxRampPerMinute*timeInterval*60*maxPowerEl);
 
 		resource2.createPlaList(0,0,0,7); // kg/h
 		resource2.createPlaList(21.997,-26.36,7,10.6091); // kg/h
@@ -126,20 +128,13 @@ public class DesignPatterns {
 
 		resource2.setNumberOfLinearSegments(resource2.getPla().size());
 
-		//		resource2.setNumberOfLinearSegments(0);
-		resource2.setEfficiency(18.8);
-		resource2.setSlope(17.5);
-		resource2.setIntercept(29);
-
 		resource2.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
 		resource2.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7, 0);
 		resource2.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7, maxPowerEl);
 		resource2.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 7,7, 0);
 		resource2.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
 		resource2.setNumberOfSystemStates(resource2.getSystemStates().size());
-		// add object to Array List
 		resourceParameters.add(resource2);
-
 
 		ResourceParameters resource3 = new  ResourceParameters();
 		resource3.setName("Storage");
@@ -556,7 +551,7 @@ public class DesignPatterns {
 
 			//-------------------------------------------------------------------- Decision Variables --------------------------------------------------------------------
 			IloNumVar[] powerInput = getCplex().numVarArray(getArrayLength(),  0 ,  maxPowerSystem);
-			
+
 			// RESOURCE 1 - Electrolyzer 1
 			IloNumVar[] powerInputElectrolyzer1 = getCplex().numVarArray(getArrayLength(), resourceParameters.get(0).getMinPowerInput(), resourceParameters.get(0).getMaxPowerInput());
 			IloNumVar[] powerOutputElectrolyzer1 = getCplex().numVarArray(getArrayLength(), resourceParameters.get(0).getMinPowerOutput(), resourceParameters.get(0).getMaxPowerOutput());
@@ -587,25 +582,31 @@ public class DesignPatterns {
 			// ------------------------------------------------------------------------ CONSTRAINTS--------------------------------------------------------------------
 			for (int i = 0; i < getArrayLength(); i++) {
 				// power input system = sum (power input electrolyzer r)
-				getCplex().addEq(powerInput[i], powerInputElectrolyzer1[i]);
+//				getCplex().addEq(powerInput[i], powerInputElectrolyzer1[i]);
 
 				// hydrogen output = sum (power output electrolyzer r)
 				// dependency correlative
-				getCplex().addEq(powerInputStorage[i], powerOutputElectrolyzer1[i]);
+//				getCplex().addEq(powerInputStorage[i], powerOutputElectrolyzer1[i]);
 
 				// dependency correlative
 				// constant hydrogen demand must be met by either storage output and/or production
 				getCplex().addEq(powerOutputStorage[i], constantHydrogenDemand);
 			}
 
+
+			
 			// Use of Design Patterns
+			generateCorrelativeDependency(new IloNumVar[][] {powerInput}, new IloNumVar[][] {powerInputElectrolyzer1});
+			generateCorrelativeDependency(new IloNumVar[][] {powerOutputElectrolyzer1}, new IloNumVar[][] {powerInputStorage});
+
 			generateInputOutputRelationship("Electrolyzer1", powerInputElectrolyzer1, powerOutputElectrolyzer1, binariesPlaElectrolyzer1, powerInputElectrolyzer1LinearSegments);
 
 			generateSystemStateSelectionByPowerLimits("Electrolyzer1", powerInputElectrolyzer1, powerOutputElectrolyzer1, statesIntArrayElectrolyzer1);
 
 			generateStateSequencesAndHoldingDuration("Electrolyzer1", statesIntArrayElectrolyzer1);
 
-			generateRampLimits("Electrolyzer1", INPUT,  powerInput, statesIntArrayElectrolyzer1);
+			generateRampLimits("Electrolyzer1", INPUT,  powerInputElectrolyzer1, statesIntArrayElectrolyzer1);
+			//			generateRampLimits("Electrolyzer1", OUTPUT,  powerOutputElectrolyzer1, statesIntArrayElectrolyzer1);
 
 			generateEnergyBalanceForStorageSystem("Storage", stateOfCharge, powerInputStorage, powerOutputStorage);
 
@@ -695,7 +696,7 @@ public class DesignPatterns {
 		int indexOfResource = -1;
 		indexOfResource = findIndexByName(nameOfResource);
 		if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
-	
+
 		if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()==0
 				&& resourceParameters.get(indexOfResource).getEfficiency()!=0
 				) {
@@ -725,9 +726,9 @@ public class DesignPatterns {
 				// sum binaries[i] = 1 part 1
 				IloNumExpr binarySum = getCplex().numExpr();
 				IloNumExpr powerInputSum = getCplex().numExpr();
-	
+
 				for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
-	
+
 					// lowerBound * power <= binary
 					getCplex().addLe(
 							getCplex().prod(
@@ -736,7 +737,7 @@ public class DesignPatterns {
 									), 
 							powerInputResourceLinearSegments[plaSegment][timestep]
 							);
-	
+
 					//power <= upperBound * binary
 					getCplex().addLe(
 							powerInputResourceLinearSegments[plaSegment][timestep], 
@@ -745,18 +746,18 @@ public class DesignPatterns {
 									binariesPlaResource[plaSegment][timestep]
 									)
 							);
-	
+
 					// sum binaries[i] = 1 part 2
 					binarySum = getCplex().sum(binarySum,binariesPlaResource[plaSegment][timestep]);
 					powerInputSum = getCplex().sum(powerInputSum, powerInputResourceLinearSegments[plaSegment][timestep]);
 				}
-	
+
 				// sum binaries[i] = 1 part 3           
 				getCplex().addEq(binarySum, 1);
-	
+
 				// sum powerInputElectrolyzer1LinearSegments[i] = powerOutputElectrolyzer1[i] part 3
 				getCplex().addEq(powerInputSum, powerInputResource[timestep]);
-	
+
 				for (int plasegment = 0; plasegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plasegment++) {
 					getCplex().add(
 							getCplex().ifThen(
@@ -789,7 +790,7 @@ public class DesignPatterns {
 	 * @param powerOutputResource the power output resource
 	 * @param binariesPlaResource the binaries pla resource
 	 * @param powerInputResourceLinearSegments the power input resource linear segments
-	 * @param int latency latency (number of time steps)
+	 * @param latency the latency
 	 * @throws IloException the ilo exception
 	 */
 	private static void generateInputOutputRelationshipWithLatency (String nameOfResource, IloNumVar[] powerInputResource, IloNumVar[] powerOutputResource, IloIntVar[][] binariesPlaResource, IloNumVar[][] powerInputResourceLinearSegments, int latency) throws IloException {
@@ -945,23 +946,23 @@ public class DesignPatterns {
 		if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
 
 		if (side == INPUT) {
-		// --------------------- ramp limits ----------------------------------
-		for (int timestep = 1; timestep < getArrayLength(); timestep++) {
-			//				TODO was ist für das erste Intervall? -> pI[0] <= rampmax, pi[0]>=rampmin
-			IloNumExpr sumMinRamp = getCplex().numExpr();
-			IloNumExpr sumMaxRamp = getCplex().numExpr();
-			IloNumExpr powerDifferenceEl1 = getCplex().numExpr();
+			// --------------------- ramp limits ----------------------------------
+			for (int timestep = 1; timestep < getArrayLength(); timestep++) {
+				//				TODO was ist für das erste Intervall? -> pI[0] <= rampmax, pi[0]>=rampmin
+				IloNumExpr sumMinRamp = getCplex().numExpr();
+				IloNumExpr sumMaxRamp = getCplex().numExpr();
+				IloNumExpr powerDifferenceEl1 = getCplex().numExpr();
 
-			powerDifferenceEl1 = getCplex().diff(relevantPowerFlowResource[timestep], relevantPowerFlowResource[timestep-1]);
+				powerDifferenceEl1 = getCplex().diff(relevantPowerFlowResource[timestep], relevantPowerFlowResource[timestep-1]);
 
-			for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
-				sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMinRampInput()));
-				sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxRampInput()));
+				for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
+					sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMinRampInput()));
+					sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxRampInput()));
+				}
+
+				getCplex().addGe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMinRamp));
+				getCplex().addLe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMaxRamp));
 			}
-
-			getCplex().addGe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMinRamp));
-			getCplex().addLe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMaxRamp));
-		}
 		} else if (side == OUTPUT) {
 			for (int timestep = 1; timestep < getArrayLength(); timestep++) {
 				//				TODO was ist für das erste Intervall? -> pI[0] <= rampmax, pi[0]>=rampmin
@@ -1103,11 +1104,42 @@ public class DesignPatterns {
 
 	/**
 	 * Generate correlative dependency.
+	 * sum powerOutput[i] = sum PowerInput[i]
+	 *
+	 * @param powerOutputs array of all relevant power output arrays (new IloNumVar [][] {})
+	 * @param powerInputs array of all relevant power input arrays (new IloNumVar [][] {})
+	 * @throws IloException the ilo exception
 	 */
-	private static void generateCorrelativeDependency () {
-
+	private static void generateCorrelativeDependency (IloNumVar[][] powerOutputs, IloNumVar[][] powerInputs) throws IloException {
+		// sum powerOutput[i] = sum PowerInput[i]
+		for (int timeStep = 0; timeStep < getArrayLength(); timeStep++) {
+			IloNumExpr powerOutputSum = getCplex().numExpr();
+			IloNumExpr powerInputSum = getCplex().numExpr();
+			for (int outputI = 0; outputI < powerOutputs.length; outputI++) {
+				powerOutputSum = getCplex().sum(powerOutputSum, powerOutputs[outputI][timeStep]);				
+			}
+			for (int inputI = 0; inputI < powerInputs.length; inputI++) {
+				powerInputSum = getCplex().sum(powerInputSum, powerInputs[inputI][timeStep]);				
+			}
+			getCplex().addEq(powerOutputSum, powerInputSum);
+		}
 	}
 
+	
+	/**
+	 * Generate restrictive dependency.
+	 * only one active member per side, all others == 0
+	 *
+	 * @param powerOutputs array of all relevant power output arrays (new IloNumVar [][] {})
+	 * @param powerInputs array of all relevant power input arrays (new IloNumVar [][] {})
+	 * @throws IloException the ilo exception
+	 */
+	private static void generateRestrictiveDependency (IloNumVar[][] powerOutputs, IloNumVar[][] powerInputs) throws IloException {
+		
+		
+	}
+	
+	
 	/**
 	 * Gets the electricity price.
 	 *
