@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import ilog.concert.*;
 import ilog.cplex.*;
@@ -167,7 +169,7 @@ public class DesignPatterns {
 		resource3.setStaticPowerLoss(0);
 		resourceParameters.add(resource3);
 
-		
+		/**
 		ResourceParameters resource4 = new ResourceParameters();
 		resource4.setName("Electrolyzer3");
 		resource4.setMinPowerInput(0);
@@ -197,6 +199,7 @@ public class DesignPatterns {
 		resource4.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
 		resource4.setNumberOfSystemStates(resource4.getSystemStates().size());
 		resourceParameters.add(resource4);
+		 */
 		System.out.println("size resourceParameters "+ resourceParameters.size());
 	}
 
@@ -213,7 +216,9 @@ public class DesignPatterns {
 		IloNumVar[] powerInput = getCplex().numVarArray(getArrayLength(),  0 ,  maxPowerSystem);
 		getDecisionVariablesVector().put("System"+"-"+INPUT+"-"+POWER, powerInput);
 
-		String[] converters = new String [] {"Electrolyzer1", "Electrolyzer2", "Electrolyzer3"};
+
+		// TODO get List of names (converters) from resourceParameters
+		String[] converters = new String [] {"Electrolyzer1", "Electrolyzer2"};//, "Electrolyzer3"};
 		String[] storageSystems = new String [] {"Storage"};
 
 		for (String nameOfResource : converters) {
@@ -328,15 +333,15 @@ public class DesignPatterns {
 					new IloNumVar[][] {
 						getDecisionVariableFromVector("Electrolyzer1", INPUT, POWER), 
 						getDecisionVariableFromVector("Electrolyzer2", INPUT, POWER),
-						getDecisionVariableFromVector("Electrolyzer3", INPUT, POWER)
+						//getDecisionVariableFromVector("Electrolyzer3", INPUT, POWER)
 					}
 					);
 
-			generateRestrictiveDependency(
+			generateCorrelativeDependency(
 					new IloNumVar[][] {
 						getDecisionVariableFromVector("Electrolyzer1", OUTPUT, POWER), 
 						getDecisionVariableFromVector("Electrolyzer2", OUTPUT, POWER),
-						getDecisionVariableFromVector("Electrolyzer3", OUTPUT, POWER)
+						//getDecisionVariableFromVector("Electrolyzer3", OUTPUT, POWER)
 					}, 
 					new IloNumVar[][] {
 						getDecisionVariableFromVector("Storage", INPUT, POWER)
@@ -361,11 +366,11 @@ public class DesignPatterns {
 			generateStateSequencesAndHoldingDuration("Electrolyzer2");
 			generateRampLimits("Electrolyzer2", INPUT);
 
-			generateInputOutputRelationship("Electrolyzer3");
-			generateSystemStateSelectionByPowerLimits("Electrolyzer3");
-			generateStateSequencesAndHoldingDuration("Electrolyzer3");
-			generateRampLimits("Electrolyzer3", INPUT);
-			
+			//			generateInputOutputRelationship("Electrolyzer3");
+			//			generateSystemStateSelectionByPowerLimits("Electrolyzer3");
+			//			generateStateSequencesAndHoldingDuration("Electrolyzer3");
+			//			generateRampLimits("Electrolyzer3", INPUT);
+
 			generateEnergyBalanceForStorageSystem("Storage");
 
 			//	System.out.println(cplex);
@@ -388,29 +393,84 @@ public class DesignPatterns {
 				long solvingTime = 	(end - start);
 				System.out.println("obj = "+getCplex().getObjValue());
 				System.out.println(getCplex().getCplexStatus());
-				double [][] optimizationResults = new double [getArrayLength()+1][100];
-				/**
-				for (int i = 0; i < getArrayLength()+1; i++) {
-					optimizationResults[i][0] = getCplex().getValue(stateOfCharge[i]);
-				}
-				for (int i = 1; i < getArrayLength()+1; i++) {
-					optimizationResults[i][1] = getCplex().getValue(powerInputElectrolyzer1[i-1]);
-					for (int j = 0; j < resourceParameters.get(0).getNumberOfLinearSegments(); j++) {
-						optimizationResults[i][2+j] = getCplex().getValue(binariesPlaElectrolyzer1[j][i-1]);
-					}
-					optimizationResults[i][12] = getCplex().getValue(powerOutputElectrolyzer1[i-1]);
-					optimizationResults[i][13] = getCplex().getValue(statesIntArrayElectrolyzer1[i-1][0]);
-					optimizationResults[i][14] = getCplex().getValue(statesIntArrayElectrolyzer1[i-1][1]);
-					optimizationResults[i][15] = getCplex().getValue(statesIntArrayElectrolyzer1[i-1][2]);
-					optimizationResults[i][16] = getCplex().getValue(statesIntArrayElectrolyzer1[i-1][3]);
-					optimizationResults[i][17] = getCplex().getValue(statesIntArrayElectrolyzer1[i-1][4]);
-					//					optimizationResults[i][18] = getElectricityPrice(getArrayLength())[i-1];
-					//					System.out.println(getCplex().getValue(binaryVariableForAbsoluteDifferenceEl1[i-1]));
-					//					optimizationResults[i][19] = cplex.getValue(binaryVariableForAbsoluteDifferenceEl1[i-1]);
-				}
 
-				writeResultsToFile(optimizationResults, "designpatterns_from-method", "stateOfCharge, powerInput, binary1, binary2, binary3, binary4, binary5, binary6, binary7, binary8, binary9, binary10, powerOutput, systemState1, systemState2,systemState3, systemState4, systemState5, electricityPrice, absoluteValueForRampElectrolyzer1");
-				 */
+				int sizeOfResultsMatrix = getDecisionVariablesMatrix().size()*40+getDecisionVariablesVector().size(); 
+
+				double [][] optimizationResults = new double [getArrayLength()+1][sizeOfResultsMatrix];
+
+				for (int i = 1; i < getArrayLength()+1; i++) {
+					int counter = 0; 
+					optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromVector("System", INPUT, POWER)[i-1]);
+					counter++; 
+					optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromVector("Electrolyzer1", INPUT, POWER)[i-1]);
+					counter++; 
+					optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromVector("Electrolyzer1", OUTPUT, POWER)[i-1]);
+					counter++; 
+					optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromVector("Electrolyzer2", INPUT, POWER)[i-1]);
+					counter++;
+					optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromVector("Electrolyzer2", OUTPUT, POWER)[i-1]);
+					counter++; 
+					optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromVector("Storage", INPUT, POWER)[i-1]);
+					counter++; 
+					optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromVector("Storage", OUTPUT, POWER)[i-1]);
+					counter++; 
+					optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromVector("Storage", SOC, POWER)[i-1]);
+					counter++; 
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT).length; j++) {
+						optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT)[j][i-1]);
+						counter++; 
+					}
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer1",POWER,BINARY).length; j++) {
+						optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromMatrix("Electrolyzer1",POWER,BINARY)[j][i-1]);
+						counter++; 
+					}
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
+						optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromMatrix("Electrolyzer1",POWER,STATE)[i-1][j]);
+						counter++; 
+					}
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,SEGMENT).length; j++) {
+						optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromMatrix("Electrolyzer2",POWER,SEGMENT)[j][i-1]);
+						counter++; 
+					}
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY).length; j++) {
+						optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY)[j][i-1]);
+						counter++; 
+					}
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
+						optimizationResults[i][counter] = getCplex().getValue(getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[i-1][j]);
+						counter++; 
+					}
+				}
+				
+				String headerOptimizationResults = null; 
+				headerOptimizationResults ="System-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer1-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer1-Output-POWER";
+				headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer2-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer2-Output-POWER";
+				headerOptimizationResults = headerOptimizationResults +","+"Storage-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +","+"Storage-Output-POWER";
+				headerOptimizationResults = headerOptimizationResults +","+"Storage-SOC";
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT).length; j++) {
+						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer1-POWER-SEGMENT-"+Integer.toString(j);
+					}
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer1",POWER,BINARY).length; j++) {
+						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer1-POWER-Binary-"+Integer.toString(j);
+					}
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
+						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer1-POWER-State-"+Integer.toString(j);
+					}
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,SEGMENT).length; j++) {
+						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer2-POWER-SEGMENT-"+Integer.toString(j);
+					}
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY).length; j++) {
+						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer2-POWER-BINARY-"+Integer.toString(j);
+					}
+					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
+						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer2-POWER-STATE-"+Integer.toString(j);
+					}
+			
+				writeResultsToFile(optimizationResults, "designpatterns_from-method", headerOptimizationResults);
 			} else {
 				System.out.println("Model not solved");
 			}
