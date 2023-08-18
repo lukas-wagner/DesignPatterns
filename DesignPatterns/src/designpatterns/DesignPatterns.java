@@ -171,17 +171,53 @@ public class DesignPatterns {
 	}
 
 
+
 	/**
-	 * Optimization model.
+	 * Creation of decision variables.
+	 * saves created decision variables to 2 hashmaps, depending on #2 of colums (1 -> vector, 2-> matrix)
 	 *
-	 * @param timeInterval the time interval
-	 * @param arrayLength the array length
+	 * @param maxPowerSystem the max power system
 	 * @throws IloException the ilo exception
 	 */
-	
 	public static void creationOfDecisionVariables (double maxPowerSystem) throws IloException {
 		IloNumVar[] powerInput = getCplex().numVarArray(getArrayLength(),  0 ,  maxPowerSystem);
 		getDecisionVariablesVector().put("System"+"-"+INPUT+"-"+POWER, powerInput);
+
+		String[] converters = new String [] {"Electrolyzer1", "Electrolyzer2"};
+
+		for (String nameOfResource : converters) {
+			int indexOfResource = -1;
+			indexOfResource = findIndexByName(nameOfResource);
+			if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
+
+			IloNumVar[] powerInputResource = getCplex().numVarArray(getArrayLength(), resourceParameters.get(indexOfResource).getMinPowerInput(), resourceParameters.get(indexOfResource).getMaxPowerInput());
+			getDecisionVariablesVector().put(nameOfResource+"-"+INPUT+"-"+POWER, powerInputResource);
+
+			IloNumVar[] powerOutputResource = getCplex().numVarArray(getArrayLength(), resourceParameters.get(indexOfResource).getMinPowerOutput(), resourceParameters.get(indexOfResource).getMaxPowerOutput());
+			getDecisionVariablesVector().put(nameOfResource+"-"+OUTPUT+"-"+POWER, powerOutputResource);
+
+			IloIntVar[][] binariesPlaResource = new IloIntVar[resourceParameters.get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
+			IloNumVar[][] powerInputLinearSegmentsResource = new IloNumVar[resourceParameters.get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
+			IloIntVar[][] statesIntArrayResource = new IloIntVar[getArrayLength()][resourceParameters.get(indexOfResource).getNumberOfSystemStates()];
+
+			for (int timeStep = 0; timeStep < getArrayLength(); timeStep++) {
+				for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
+					statesIntArrayResource[timeStep][state] = getCplex().intVar(0, 1);
+				}
+			}
+
+			for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
+				binariesPlaResource[plaSegment] = getCplex().intVarArray(getArrayLength(), 0 ,1);
+				powerInputLinearSegmentsResource[plaSegment] = getCplex().numVarArray(arrayLength,resourceParameters.get(indexOfResource).getMinPowerInput(), resourceParameters.get(indexOfResource).getMaxPowerInput());
+			}
+
+			getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+BINARY, binariesPlaResource);
+			getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+SEGMENT, powerInputLinearSegmentsResource);
+			getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+STATE, statesIntArrayResource);
+
+		}
+
+		/**
 
 		// ---------------------RESOURCE 1 - Electrolyzer1---------------------
 		IloNumVar[] powerInputElectrolyzer1 = getCplex().numVarArray(getArrayLength(), resourceParameters.get(0).getMinPowerInput(), resourceParameters.get(0).getMaxPowerInput());
@@ -233,9 +269,9 @@ public class DesignPatterns {
 		getDecisionVariablesMatrix().put("Electrolyzer2"+"-"+POWER+"-"+SEGMENT, powerInputElectrolyzer2LinearSegments);
 		getDecisionVariablesMatrix().put("Electrolyzer2"+"-"+POWER+"-"+STATE, statesIntArrayElectrolyzer2);
 
-
+		 */
 		IloNumVar[] combinedHydrogenOutput = getCplex().numVarArray(getArrayLength(),  0 ,  Double.MAX_VALUE);
-		
+
 		// ---------------------RESOURCE 3 - Storage---------------------
 		IloNumVar[] powerInputStorage = getCplex().numVarArray(getArrayLength(), resourceParameters.get(2).getMinPowerOutput(), resourceParameters.get(2).getMaxPowerOutput());
 		IloNumVar[] stateOfCharge = getCplex().numVarArray(getArrayLength()+1, resourceParameters.get(2).getMinimumStorageCapacity(), resourceParameters.get(2).getMaximumStorageCapacity());
@@ -264,7 +300,7 @@ public class DesignPatterns {
 			for (int i = 0; i < getArrayLength(); i++) {
 				getCplex().addEq(powerOutputSystem[i], constantHydrogenDemand);
 			}
-		
+
 			// ------------------------------------------------------------------------ Use of Design Patterns--------------------------------------------------------------------
 			generateCorrelativeDependency(
 					new IloNumVar[][] {getDecisionVariableFromVector("System", INPUT, POWER)}, 
@@ -273,7 +309,6 @@ public class DesignPatterns {
 						getDecisionVariableFromVector("Electrolyzer2", INPUT, POWER),
 					}
 					);
-
 
 			generateCorrelativeDependency(
 					new IloNumVar[][] {
@@ -285,13 +320,11 @@ public class DesignPatterns {
 					}
 					);
 
-
 			generateCorrelativeDependency(
 					new IloNumVar[][] {getDecisionVariableFromVector("Storage", OUTPUT, POWER)}, 
 					new IloNumVar[][] {powerOutputSystem}
 					);
 
-			
 			generateCorrelativeDependency(new IloNumVar[][] {}, new IloNumVar[][] {});
 			generateRestrictiveDependency(new IloNumVar[][] {}, new IloNumVar[][] {});
 
@@ -299,7 +332,7 @@ public class DesignPatterns {
 			generateSystemStateSelectionByPowerLimits("Electrolyzer1");
 			generateStateSequencesAndHoldingDuration("Electrolyzer1");
 			generateRampLimits("Electrolyzer1", INPUT);
-	
+
 			generateInputOutputRelationship("Electrolyzer2");
 			generateSystemStateSelectionByPowerLimits("Electrolyzer2");
 			generateStateSequencesAndHoldingDuration("Electrolyzer2");
@@ -1089,7 +1122,7 @@ public class DesignPatterns {
 	public static void setDecisionVariablesMatrix(HashMap<String, IloNumVar[][]> decisionVariablesMatrix) {
 		DesignPatterns.decisionVariablesMatrix = decisionVariablesMatrix;
 	}
-	
+
 	public static void optimizationModel(double timeInterval, int arrayLength) throws IloException {
 		try {
 			@SuppressWarnings("resource")
@@ -1467,7 +1500,4 @@ public class DesignPatterns {
 			exc.printStackTrace();
 		}
 	}
-
-
-	
 }
