@@ -1,6 +1,5 @@
 package designpatterns;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Class SystemState.
  */

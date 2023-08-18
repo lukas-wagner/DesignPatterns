@@ -3,7 +3,6 @@ package designpatterns;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO: Auto-generated Javadoc
 /**
  * ResourceParameters for Design Patterns.
  */
