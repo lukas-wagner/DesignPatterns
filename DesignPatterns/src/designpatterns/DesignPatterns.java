@@ -28,18 +28,20 @@ public class DesignPatterns {
 	/** The resource parameters. */
 	static List<ResourceParameters> resourceParameters = new ArrayList<>();
 
-	/** The nolimit. */
-	static double NOLIMIT = 9999;
 
 	/** The array length. */
 	static int arrayLength; 
 
-	/** The time interval. */
+	/** The time interval = length of time step. */
 	static double timeInterval; 
 
 	/** The optimality gap. */
 	static double optimalityGap; 
 
+	/** The nolimit. */
+	private static final double NOLIMIT = 9999;
+	private static final String INPUT = "Input";
+	private static final String OUTPUT = "Output";
 	/**
 	 * The main method.
 	 *
@@ -56,9 +58,9 @@ public class DesignPatterns {
 	 * Sets the optimization parameters, primarily in ResourceParameters resourceParameters
 	 */
 	public static void setOptimizationParameters () {
-		setOptimalityGap(0.001);
-		setTimeInterval(0.25); // 0.05 = 3Minuten, 0.125 = 7.5 Minuten
-		setArrayLength(20); // select price length
+		setOptimalityGap(0.001); // default 10e-4
+		setTimeInterval(0.25); // 0.05 = 3Minutes, 0.125 = 7.5 Minutes
+		setArrayLength(20); // set arrayLength in # of time steps
 
 		// parameters
 		// new object for resource to set parameters
@@ -371,8 +373,8 @@ public class DesignPatterns {
 				powerDifferenceEl1 = cplex.diff(powerInputElectrolyzer1[i], powerInputElectrolyzer1[i-1]);
 
 				for (int j = 0; j < resourceParameters.get(0).getNumberOfSystemStates(); j++) {
-					sumMinRamp = cplex.sum(sumMinRamp, cplex.prod(statesIntArrayElectrolyzer1[i][j], resourceParameters.get(0).getSystemStates().get(j).getMinRamp()));
-					sumMaxRamp = cplex.sum(sumMaxRamp, cplex.prod(statesIntArrayElectrolyzer1[i][j], resourceParameters.get(0).getSystemStates().get(j).getMaxRamp()));
+					sumMinRamp = cplex.sum(sumMinRamp, cplex.prod(statesIntArrayElectrolyzer1[i][j], resourceParameters.get(0).getSystemStates().get(j).getMinRampInput()));
+					sumMaxRamp = cplex.sum(sumMaxRamp, cplex.prod(statesIntArrayElectrolyzer1[i][j], resourceParameters.get(0).getSystemStates().get(j).getMaxRampInput()));
 				}
 
 
@@ -548,15 +550,14 @@ public class DesignPatterns {
 	 */
 	public static void optimizationModelWithMethods() throws IloException {
 		try {
-
-			//			additional parameters for system
+			//additional parameters for system
 			double maxPowerSystem = 100; 
 			double constantHydrogenDemand = 900*getTimeInterval();
 
 			//-------------------------------------------------------------------- Decision Variables --------------------------------------------------------------------
-			// RESOURCE 1 - Electrolyzer 1
 			IloNumVar[] powerInput = getCplex().numVarArray(getArrayLength(),  0 ,  maxPowerSystem);
-
+			
+			// RESOURCE 1 - Electrolyzer 1
 			IloNumVar[] powerInputElectrolyzer1 = getCplex().numVarArray(getArrayLength(), resourceParameters.get(0).getMinPowerInput(), resourceParameters.get(0).getMaxPowerInput());
 			IloNumVar[] powerOutputElectrolyzer1 = getCplex().numVarArray(getArrayLength(), resourceParameters.get(0).getMinPowerOutput(), resourceParameters.get(0).getMaxPowerOutput());
 			IloIntVar[][] binariesPlaElectrolyzer1 = new IloIntVar[resourceParameters.get(0).getNumberOfLinearSegments()][getArrayLength()]; 
@@ -604,7 +605,7 @@ public class DesignPatterns {
 
 			generateStateSequencesAndHoldingDuration("Electrolyzer1", statesIntArrayElectrolyzer1);
 
-			generateRampLimits("Electrolyzer1", powerInput, statesIntArrayElectrolyzer1);
+			generateRampLimits("Electrolyzer1", INPUT,  powerInput, statesIntArrayElectrolyzer1);
 
 			generateEnergyBalanceForStorageSystem("Storage", stateOfCharge, powerInputStorage, powerOutputStorage);
 
@@ -694,7 +695,7 @@ public class DesignPatterns {
 		int indexOfResource = -1;
 		indexOfResource = findIndexByName(nameOfResource);
 		if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
-
+	
 		if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()==0
 				&& resourceParameters.get(indexOfResource).getEfficiency()!=0
 				) {
@@ -708,6 +709,7 @@ public class DesignPatterns {
 		} else if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()==0
 				&& resourceParameters.get(indexOfResource).getEfficiency()==0
 				&& resourceParameters.get(indexOfResource).getSlope()!=0) {
+			// y = ax+b
 			for (int timestep = 0; timestep < getArrayLength(); timestep++) {
 				getCplex().addEq(powerOutputResource[timestep], 
 						getCplex().sum(
@@ -718,6 +720,122 @@ public class DesignPatterns {
 			}
 		} else if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()>0) {
 			// Case 3: pla
+			System.out.println("Case 3: pla");
+			for (int timestep = 0; timestep < getArrayLength(); timestep++) {
+				// sum binaries[i] = 1 part 1
+				IloNumExpr binarySum = getCplex().numExpr();
+				IloNumExpr powerInputSum = getCplex().numExpr();
+	
+				for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
+	
+					// lowerBound * power <= binary
+					getCplex().addLe(
+							getCplex().prod(
+									resourceParameters.get(indexOfResource).getPla().get(plaSegment).getLowerBound(), 
+									binariesPlaResource[plaSegment][timestep]
+									), 
+							powerInputResourceLinearSegments[plaSegment][timestep]
+							);
+	
+					//power <= upperBound * binary
+					getCplex().addLe(
+							powerInputResourceLinearSegments[plaSegment][timestep], 
+							getCplex().prod(
+									resourceParameters.get(indexOfResource).getPla().get(plaSegment).getUpperBound(), 
+									binariesPlaResource[plaSegment][timestep]
+									)
+							);
+	
+					// sum binaries[i] = 1 part 2
+					binarySum = getCplex().sum(binarySum,binariesPlaResource[plaSegment][timestep]);
+					powerInputSum = getCplex().sum(powerInputSum, powerInputResourceLinearSegments[plaSegment][timestep]);
+				}
+	
+				// sum binaries[i] = 1 part 3           
+				getCplex().addEq(binarySum, 1);
+	
+				// sum powerInputElectrolyzer1LinearSegments[i] = powerOutputElectrolyzer1[i] part 3
+				getCplex().addEq(powerInputSum, powerInputResource[timestep]);
+	
+				for (int plasegment = 0; plasegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plasegment++) {
+					getCplex().add(
+							getCplex().ifThen(
+									getCplex().and(
+											getCplex().le(binariesPlaResource[plasegment][timestep], 1),
+											getCplex().ge(binariesPlaResource[plasegment][timestep], 0.9)
+											),
+									getCplex().eq(powerOutputResource[timestep],
+											getCplex().sum(
+													resourceParameters.get(indexOfResource).getPla().get(plasegment).getIntercept(),
+													getCplex().prod(
+															powerInputResourceLinearSegments[plasegment][timestep],
+															resourceParameters.get(indexOfResource).getPla().get(plasegment).getSlope()
+															)
+													)
+											)
+									)
+							);
+				}
+			}
+		}
+		System.out.println("Input-output successfully created for resource " + nameOfResource);
+	}
+
+	/**
+	 * Generate input output relationship with latency.
+	 *
+	 * @param nameOfResource the name of resource
+	 * @param powerInputResource the power input resource
+	 * @param powerOutputResource the power output resource
+	 * @param binariesPlaResource the binaries pla resource
+	 * @param powerInputResourceLinearSegments the power input resource linear segments
+	 * @param int latency latency (number of time steps)
+	 * @throws IloException the ilo exception
+	 */
+	private static void generateInputOutputRelationshipWithLatency (String nameOfResource, IloNumVar[] powerInputResource, IloNumVar[] powerOutputResource, IloIntVar[][] binariesPlaResource, IloNumVar[][] powerInputResourceLinearSegments, int latency) throws IloException {
+		// Pattern input output
+		// find id by name
+		int indexOfResource = -1;
+		indexOfResource = findIndexByName(nameOfResource);
+		if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
+
+		IloNumVar[] helperVariable = getCplex().numVarArray(getArrayLength(), resourceParameters.get(indexOfResource).getMinPowerOutput(), resourceParameters.get(indexOfResource).getMaxPowerOutput());
+		if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()==0
+				&& resourceParameters.get(indexOfResource).getEfficiency()!=0
+				) {
+			// Case 1: efficiency
+			System.out.println("Case 1: efficiency with latency");
+
+			if (latency>getArrayLength()) {
+				System.err.println("Latency > ArrayLength: "+ latency+ ">" + getArrayLength());
+			}
+			else {
+				for (int timestep = 0; timestep < getArrayLength(); timestep++) {
+					getCplex().addEq(helperVariable[timestep], 
+							getCplex().prod(powerInputResource[timestep], resourceParameters.get(indexOfResource).getEfficiency())
+							);
+				} 
+				for (int timestep = latency; timestep < getArrayLength()-latency; timestep++) {
+					// TODO was ist mit dem Ende, wenn PIn = 0 und Pout >0?
+					getCplex().addEq(powerOutputResource[timestep+latency], helperVariable[timestep]);
+				}				
+			}
+
+		} else if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()==0
+				&& resourceParameters.get(indexOfResource).getEfficiency()==0
+				&& resourceParameters.get(indexOfResource).getSlope()!=0) {
+			// TODO include latency in y = ax+b 
+			for (int timestep = 0; timestep < getArrayLength(); timestep++) {
+				getCplex().addEq(powerOutputResource[timestep], 
+						getCplex().sum(
+								resourceParameters.get(indexOfResource).getIntercept(),
+								getCplex().prod(powerInputResource[timestep], resourceParameters.get(indexOfResource).getSlope())
+								)
+						);
+			}
+		} else if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()>0) {
+			// Case 3: pla
+			// TODO include latency in pla 
 			System.out.println("Case 3: pla");
 			for (int timestep = 0; timestep < getArrayLength(); timestep++) {
 				// sum binaries[i] = 1 part 1
@@ -816,15 +934,17 @@ public class DesignPatterns {
 	 * Generate ramp limits.
 	 *
 	 * @param nameOfResource the name of resource
-	 * @param powerInputResource the power input resource
+	 * @param side the side (INPUT XOR OUTPUT)
+	 * @param relevantPowerFlowResource the power input resource
 	 * @param statesIntArrayResource the states int array resource
 	 * @throws IloException the ilo exception
 	 */
-	private static void generateRampLimits (String nameOfResource,  IloNumVar[] powerInputResource, IloIntVar[][] statesIntArrayResource) throws IloException {
+	private static void generateRampLimits (String nameOfResource, String side,  IloNumVar[] relevantPowerFlowResource, IloIntVar[][] statesIntArrayResource) throws IloException {
 		int indexOfResource = -1;
 		indexOfResource = findIndexByName(nameOfResource);
 		if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
 
+		if (side == INPUT) {
 		// --------------------- ramp limits ----------------------------------
 		for (int timestep = 1; timestep < getArrayLength(); timestep++) {
 			//				TODO was ist für das erste Intervall? -> pI[0] <= rampmax, pi[0]>=rampmin
@@ -832,15 +952,33 @@ public class DesignPatterns {
 			IloNumExpr sumMaxRamp = getCplex().numExpr();
 			IloNumExpr powerDifferenceEl1 = getCplex().numExpr();
 
-			powerDifferenceEl1 = getCplex().diff(powerInputResource[timestep], powerInputResource[timestep-1]);
+			powerDifferenceEl1 = getCplex().diff(relevantPowerFlowResource[timestep], relevantPowerFlowResource[timestep-1]);
 
 			for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
-				sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMinRamp()));
-				sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxRamp()));
+				sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMinRampInput()));
+				sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxRampInput()));
 			}
 
 			getCplex().addGe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMinRamp));
 			getCplex().addLe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMaxRamp));
+		}
+		} else if (side == OUTPUT) {
+			for (int timestep = 1; timestep < getArrayLength(); timestep++) {
+				//				TODO was ist für das erste Intervall? -> pI[0] <= rampmax, pi[0]>=rampmin
+				IloNumExpr sumMinRamp = getCplex().numExpr();
+				IloNumExpr sumMaxRamp = getCplex().numExpr();
+				IloNumExpr powerDifferenceEl1 = getCplex().numExpr();
+
+				powerDifferenceEl1 = getCplex().diff(relevantPowerFlowResource[timestep], relevantPowerFlowResource[timestep-1]);
+
+				for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
+					sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMinRampOutput()));
+					sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxRampOutput()));
+				}
+
+				getCplex().addGe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMinRamp));
+				getCplex().addLe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMaxRamp));
+			}
 		}
 	}
 

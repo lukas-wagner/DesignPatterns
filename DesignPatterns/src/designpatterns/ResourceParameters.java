@@ -3,43 +3,76 @@ package designpatterns;
 import java.util.ArrayList;
 import java.util.List;
 
+// TODO: Auto-generated Javadoc
 /**
  * ResourceParameters for Design Patterns.
  */
 public class ResourceParameters {
+	
+	/** The name. */
 	String name; 
+	
+	/** The relevant energy carrier. */
 	String relevantEnergyCarrier; 
 	/** The min/max power input. */
 	double minPowerInput; 
+	
+	/** The max power input. */
 	double maxPowerInput = Double.MAX_VALUE; 
 
 	/** The min/max power output. */
 	double minPowerOutput;
+	
+	/** The max power output. */
 	double maxPowerOutput = Double.MAX_VALUE;
 
 	/** The min/max ramp. */
 	double minRamp; 
+	
+	/** The max ramp. */
 	double maxRamp;
 
+	/** The system states. */
 	List<SystemState> systemStates = new ArrayList<SystemState>();
+	
+	/** The number of system states. */
 	int numberOfSystemStates;
 
-	/** Efficiencies/IO Relation */
+	/**  Efficiencies/IO Relation. */
 	double efficiency; 
+	
+	/** The intercept. */
 	double slope, intercept; 
 
+	/** The pla. */
 	List<PiecewiseLinearApproximation> pla = new ArrayList<PiecewiseLinearApproximation>();
+	
+	/** The number of linear segments. */
 	int numberOfLinearSegments; 
 
 
-	/** Storage Specific parameters */
+	/**  Storage Specific parameters. */
 	boolean isStorage = false; 
+	
+	/** The maximum storage capacity. */
 	double maximumStorageCapacity;
+	
+	/** The minimum storage capacity. */
 	double minimumStorageCapacity; 
+	
+	/** The inital capacity. */
 	double initalCapacity; 
+	
+	/** The static power loss. */
 	double staticPowerLoss;
+	
+	/** The efficiency input storage. */
 	double efficiencyInputStorage = 1; 
+	
+	/** The efficiency output storage. */
 	double efficiencyOutputStorage = 1; 
+	
+	/** The efficiency output reciprocal. */
 	double efficiencyOutputReciprocal = 1/efficiencyOutputStorage;
 
 	/**
@@ -82,6 +115,20 @@ public class ResourceParameters {
 		state.setMaxPower(maxPowerState);
 		this.systemStates.add(state);
 	}
+	
+	/**
+	 * Adds the system state with ramp.
+	 *
+	 * @param stateID the state ID
+	 * @param stateName the state name
+	 * @param minHoldingDuration the min holding duration
+	 * @param maxHoldingDuration the max holding duration
+	 * @param idsOfFollowerStates the ids of follower states
+	 * @param minPowerState the min power state
+	 * @param maxPowerState the max power state
+	 * @param minRampState the min ramp state
+	 * @param maxRampState the max ramp state
+	 */
 	public void addSystemStateWithRamp (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState, double minRampState, double maxRampState) {
 		SystemState state = new SystemState();
 		state.setStateID(stateID);
@@ -91,12 +138,13 @@ public class ResourceParameters {
 		state.setFollowerStates(idsOfFollowerStates);
 		state.setMinPower(minPowerState);
 		state.setMaxPower(maxPowerState);
-		state.setMinRamp(minRampState);
-		state.setMaxRamp(maxRampState);
+		state.setMinRampInput(minRampState);
+		state.setMaxRampInput(maxRampState);
 		this.systemStates.add(state);
 	}
+	
 	/**
-	 * Adds the system state.
+	 * Adds the system state with max power output.
 	 *
 	 * @param stateID the state ID
 	 * @param stateName the state name
@@ -105,6 +153,7 @@ public class ResourceParameters {
 	 * @param idsOfFollowerStates the ids of follower states
 	 * @param minPowerState the min power state
 	 * @param maxPowerState the max power state
+	 * @param maxPowerOutputState the max power output state
 	 */
 	public void addSystemStateWithMaxPowerOutput (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState, double maxPowerOutputState) {
 		SystemState state = new SystemState();
@@ -120,7 +169,7 @@ public class ResourceParameters {
 	}
 	
 	/**
-	 * Adds the system state with max power output and ramp.
+	 * Adds the system state with max power output and ramp input.
 	 *
 	 * @param stateID the state ID
 	 * @param stateName the state name
@@ -130,10 +179,10 @@ public class ResourceParameters {
 	 * @param minPowerState the min power state
 	 * @param maxPowerState the max power state
 	 * @param maxPowerOutputState the max power output state
-	 * @param minRamp the min ramp
-	 * @param maxRamp the max ramp
+	 * @param minRampStateInput the min ramp state input
+	 * @param maxRampStateInput the max ramp state input
 	 */
-	public void addSystemStateWithMaxPowerOutputAndRamp (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState, double maxPowerOutputState, double minRampState, double maxRampState) {
+	public void addSystemStateWithMaxPowerOutputAndRampInput (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState, double maxPowerOutputState, double minRampStateInput, double maxRampStateInput) {
 		SystemState state = new SystemState();
 		state.setStateID(stateID);
 		state.setStateName(stateName);
@@ -143,8 +192,70 @@ public class ResourceParameters {
 		state.setMinPower(minPowerState);
 		state.setMaxPower(maxPowerState);
 		state.setMaxPowerOutput(maxPowerOutputState);
-		state.setMinRamp(minRampState);
-		state.setMaxRamp(maxRampState);
+		state.setMinRampInput(minRampStateInput);
+		state.setMaxRampInput(maxRampStateInput);
+		this.systemStates.add(state);
+	}
+	
+	/**
+	 * Adds the system state with max power output and ramp output.
+	 *
+	 * @param stateID the state ID
+	 * @param stateName the state name
+	 * @param minHoldingDuration the min holding duration
+	 * @param maxHoldingDuration the max holding duration
+	 * @param idsOfFollowerStates the ids of follower states
+	 * @param minPowerState the min power state
+	 * @param maxPowerState the max power state
+	 * @param maxPowerOutputState the max power output state
+	 * @param minRampStateOutput the min ramp state output
+	 * @param maxRampStateOutput the max ramp state output
+	 */
+	public void addSystemStateWithMaxPowerOutputAndRampOutput (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState, double maxPowerOutputState, double minRampStateOutput, double maxRampStateOutput) {
+		SystemState state = new SystemState();
+		state.setStateID(stateID);
+		state.setStateName(stateName);
+		state.setMinStateDuration(minHoldingDuration);
+		state.setMaxStateDuration(maxHoldingDuration);
+		state.setFollowerStates(idsOfFollowerStates);
+		state.setMinPower(minPowerState);
+		state.setMaxPower(maxPowerState);
+		state.setMaxPowerOutput(maxPowerOutputState);
+		state.setMinRampOutput(minRampStateOutput);
+		state.setMaxRampOutput(maxRampStateOutput);
+		this.systemStates.add(state);
+	}
+	
+	/**
+	 * Adds the system state with max power output and ramp input output.
+	 *
+	 * @param stateID the state ID
+	 * @param stateName the state name
+	 * @param minHoldingDuration the min holding duration
+	 * @param maxHoldingDuration the max holding duration
+	 * @param idsOfFollowerStates the ids of follower states
+	 * @param minPowerState the min power state
+	 * @param maxPowerState the max power state
+	 * @param maxPowerOutputState the max power output state
+	 * @param minRampStateInput the min ramp state input
+	 * @param maxRampStateInput the max ramp state input
+	 * @param minRampStateOutput the min ramp state output
+	 * @param maxRampStateOutput the max ramp state output
+	 */
+	public void addSystemStateWithMaxPowerOutputAndRampInputOutput (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState, double maxPowerOutputState, double minRampStateInput, double maxRampStateInput, double minRampStateOutput, double maxRampStateOutput) {
+		SystemState state = new SystemState();
+		state.setStateID(stateID);
+		state.setStateName(stateName);
+		state.setMinStateDuration(minHoldingDuration);
+		state.setMaxStateDuration(maxHoldingDuration);
+		state.setFollowerStates(idsOfFollowerStates);
+		state.setMinPower(minPowerState);
+		state.setMaxPower(maxPowerState);
+		state.setMaxPowerOutput(maxPowerOutputState);
+		state.setMinRampInput(minRampStateInput);
+		state.setMaxRampInput(maxRampStateInput);
+		state.setMinRampOutput(minRampStateOutput);
+		state.setMaxRampOutput(maxRampStateOutput);
 		this.systemStates.add(state);
 	}
 	/**
@@ -220,6 +331,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the name.
+	 *
 	 * @return the name
 	 */
 	public String getName() {
@@ -227,6 +340,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the name.
+	 *
 	 * @param name the name to set
 	 */
 	public void setName(String name) {
@@ -234,6 +349,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the relevant energy carrier.
+	 *
 	 * @return the relevantEnergyCarrier
 	 */
 	public String getRelevantEnergyCarrier() {
@@ -241,6 +358,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the relevant energy carrier.
+	 *
 	 * @param relevantEnergyCarrier the relevantEnergyCarrier to set
 	 */
 	public void setRelevantEnergyCarrier(String relevantEnergyCarrier) {
@@ -248,6 +367,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the efficiency.
+	 *
 	 * @return the efficiency
 	 */
 	public double getEfficiency() {
@@ -255,6 +376,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the efficiency.
+	 *
 	 * @param efficiency the efficiency to set
 	 */
 	public void setEfficiency(double efficiency) {
@@ -262,6 +385,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the slope.
+	 *
 	 * @return the slope
 	 */
 	public double getSlope() {
@@ -269,6 +394,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the slope.
+	 *
 	 * @param slope the slope to set
 	 */
 	public void setSlope(double slope) {
@@ -276,6 +403,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the intercept.
+	 *
 	 * @return the intercept
 	 */
 	public double getIntercept() {
@@ -283,6 +412,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the intercept.
+	 *
 	 * @param intercept the intercept to set
 	 */
 	public void setIntercept(double intercept) {
@@ -292,6 +423,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the number of linear segments.
+	 *
 	 * @return the numberOfLinearSegments
 	 */
 	public int getNumberOfLinearSegments() {
@@ -299,6 +432,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the number of linear segments.
+	 *
 	 * @param numberOfLinearSegments the numberOfLinearSegments to set
 	 */
 	public void setNumberOfLinearSegments(int numberOfLinearSegments) {
@@ -306,6 +441,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the pla.
+	 *
 	 * @return the pla
 	 */
 	public List<PiecewiseLinearApproximation> getPla() {
@@ -313,6 +450,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the pla.
+	 *
 	 * @param pla the pla to set
 	 */
 	public void setPla(List<PiecewiseLinearApproximation> pla) {
@@ -321,6 +460,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Checks if is storage.
+	 *
 	 * @return the isStorage
 	 */
 	public boolean isStorage() {
@@ -329,6 +470,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the resource as storage.
+	 *
 	 * @param isStorage the isStorage to set
 	 */
 	public void setResourceAsStorage(boolean isStorage) {
@@ -337,6 +480,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the maximum storage capacity.
+	 *
 	 * @return the maximumStorageCapacity
 	 */
 	public double getMaximumStorageCapacity() {
@@ -345,6 +490,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the maximum storage capacity.
+	 *
 	 * @param maximumStorageCapacity the maximumStorageCapacity to set
 	 */
 	public void setMaximumStorageCapacity(double maximumStorageCapacity) {
@@ -353,6 +500,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the minimum storage capacity.
+	 *
 	 * @return the minimumStorageCapacity
 	 */
 	public double getMinimumStorageCapacity() {
@@ -361,6 +510,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the minimum storage capacity.
+	 *
 	 * @param minimumStorageCapacity the minimumStorageCapacity to set
 	 */
 	public void setMinimumStorageCapacity(double minimumStorageCapacity) {
@@ -369,6 +520,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the inital capacity.
+	 *
 	 * @return the initalCapacity
 	 */
 	public double getInitalCapacity() {
@@ -377,6 +530,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the inital capacity.
+	 *
 	 * @param initalCapacity the initalCapacity to set
 	 */
 	public void setInitalCapacity(double initalCapacity) {
@@ -385,6 +540,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the static power loss.
+	 *
 	 * @return the staticPowerLoss
 	 */
 	public double getStaticPowerLoss() {
@@ -393,6 +550,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the static power loss.
+	 *
 	 * @param staticPowerLoss the staticPowerLoss to set
 	 */
 	public void setStaticPowerLoss(double staticPowerLoss) {
@@ -400,6 +559,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the min power output.
+	 *
 	 * @return the minPowerOutput
 	 */
 	public double getMinPowerOutput() {
@@ -407,6 +568,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the min power output.
+	 *
 	 * @param minPowerOutput the minPowerOutput to set
 	 */
 	public void setMinPowerOutput(double minPowerOutput) {
@@ -414,6 +577,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the max power output.
+	 *
 	 * @return the maxPowerOutput
 	 */
 	public double getMaxPowerOutput() {
@@ -421,6 +586,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the max power output.
+	 *
 	 * @param maxPowerOutput the maxPowerOutput to set
 	 */
 	public void setMaxPowerOutput(double maxPowerOutput) {
@@ -428,6 +595,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the efficiency input storage.
+	 *
 	 * @return the efficiencyInputStorage
 	 */
 	public double getEfficiencyInputStorage() {
@@ -435,6 +604,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the efficiency input storage.
+	 *
 	 * @param efficiencyInputStorage the efficiencyInputStorage to set
 	 */
 	public void setEfficiencyInputStorage(double efficiencyInputStorage) {
@@ -442,6 +613,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the efficiency output storage.
+	 *
 	 * @return the efficiencyOutputStorage
 	 */
 	public double getEfficiencyOutputStorage() {
@@ -449,6 +622,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the efficiency output storage.
+	 *
 	 * @param efficiencyOutputStorage the efficiencyOutputStorage to set
 	 */
 	public void setEfficiencyOutputStorage(double efficiencyOutputStorage) {
@@ -456,6 +631,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the efficiency output reciprocal.
+	 *
 	 * @return the efficiencyOutputReciprocal
 	 */
 	public double getEfficiencyOutputReciprocal() {
@@ -463,6 +640,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the efficiency output reciprocal.
+	 *
 	 * @param efficiencyOutputReciprocal the efficiencyOutputReciprocal to set
 	 */
 	public void setEfficiencyOutputReciprocal(double efficiencyOutputReciprocal) {
@@ -471,6 +650,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the system states.
+	 *
 	 * @return the systemStates
 	 */
 	public List<SystemState> getSystemStates() {
@@ -479,6 +660,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the system states.
+	 *
 	 * @param systemStates the systemStates to set
 	 */
 	public void setSystemStates(List<SystemState> systemStates) {
@@ -487,6 +670,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the number of system states.
+	 *
 	 * @return the numberOfSystemStates
 	 */
 	public int getNumberOfSystemStates() {
@@ -495,6 +680,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the number of system states.
+	 *
 	 * @param numberOfSystemStates the numberOfSystemStates to set
 	 */
 	public void setNumberOfSystemStates(int numberOfSystemStates) {
