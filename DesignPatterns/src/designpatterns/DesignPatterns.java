@@ -81,7 +81,7 @@ public class DesignPatterns {
 	 * Sets the optimization parameters, primarily in ResourceParameters resourceParameters.
 	 */
 	public static void setOptimizationParameters () {
-		setOptimalityGap(0.001); // default 10e-4
+		setOptimalityGap(0.01); // default 10e-4
 		setTimeInterval(0.25); // 0.05 = 3Minutes, 0.125 = 7.5 Minutes
 		setArrayLength(20); // set arrayLength in # of time steps
 
@@ -167,6 +167,36 @@ public class DesignPatterns {
 		resource3.setStaticPowerLoss(0);
 		resourceParameters.add(resource3);
 
+		
+		ResourceParameters resource4 = new ResourceParameters();
+		resource4.setName("Electrolyzer3");
+		resource4.setMinPowerInput(0);
+		resource4.setMinPowerOutput(0);
+		resource4.setMaxPowerInput(maxPowerEl);
+		resource4.setMaxPowerOutput(1000);
+
+		resource4.createPlaList(0,0,0,7); // kg/h
+		resource4.createPlaList(21.997,-26.36,7,10.6091); // kg/h
+		resource4.createPlaList(20.754,-13.173,10.6091,13.31882);
+		resource4.createPlaList(19.782,-0.23309,13.31882,16.59741);
+		resource4.createPlaList(18.787,16.289,16.59741,20.78419);
+		resource4.createPlaList(17.864,35.465,20.78419,25.39345);
+		resource4.createPlaList(17.132,54.051,25.39345,29.70148);
+		resource4.createPlaList(16.609,69.603,29.70148,33.85188);
+		resource4.createPlaList(16.058,88.24,33.85188,39.48562);
+		resource4.createPlaList(15.622,105.45,39.48562,42.91256);
+		resource4.createPlaList(15.308,118.93,42.91256,46.914);
+		resource4.createPlaList(14.946,135.92,46.914,50);
+
+		resource4.setNumberOfLinearSegments(resource4.getPla().size());
+
+		resource4.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
+		resource4.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7, 0);
+		resource4.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7, maxPowerEl);
+		resource4.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 7,7, 0);
+		resource4.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
+		resource4.setNumberOfSystemStates(resource4.getSystemStates().size());
+		resourceParameters.add(resource4);
 		System.out.println("size resourceParameters "+ resourceParameters.size());
 	}
 
@@ -183,102 +213,93 @@ public class DesignPatterns {
 		IloNumVar[] powerInput = getCplex().numVarArray(getArrayLength(),  0 ,  maxPowerSystem);
 		getDecisionVariablesVector().put("System"+"-"+INPUT+"-"+POWER, powerInput);
 
-		String[] converters = new String [] {"Electrolyzer1", "Electrolyzer2"};
+		String[] converters = new String [] {"Electrolyzer1", "Electrolyzer2", "Electrolyzer3"};
+		String[] storageSystems = new String [] {"Storage"};
 
 		for (String nameOfResource : converters) {
 			int indexOfResource = -1;
 			indexOfResource = findIndexByName(nameOfResource);
 			if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
 
-			IloNumVar[] powerInputResource = getCplex().numVarArray(getArrayLength(), resourceParameters.get(indexOfResource).getMinPowerInput(), resourceParameters.get(indexOfResource).getMaxPowerInput());
+			IloNumVar[] powerInputResource = getCplex().numVarArray(
+					getArrayLength(), 
+					resourceParameters.get(indexOfResource).getMinPowerInput(), 
+					resourceParameters.get(indexOfResource).getMaxPowerInput()
+					);
 			getDecisionVariablesVector().put(nameOfResource+"-"+INPUT+"-"+POWER, powerInputResource);
 
-			IloNumVar[] powerOutputResource = getCplex().numVarArray(getArrayLength(), resourceParameters.get(indexOfResource).getMinPowerOutput(), resourceParameters.get(indexOfResource).getMaxPowerOutput());
+			IloNumVar[] powerOutputResource = getCplex().numVarArray(
+					getArrayLength(), 
+					resourceParameters.get(indexOfResource).getMinPowerOutput(), 
+					resourceParameters.get(indexOfResource).getMaxPowerOutput()
+					);
 			getDecisionVariablesVector().put(nameOfResource+"-"+OUTPUT+"-"+POWER, powerOutputResource);
 
-			IloIntVar[][] binariesPlaResource = new IloIntVar[resourceParameters.get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
-			IloNumVar[][] powerInputLinearSegmentsResource = new IloNumVar[resourceParameters.get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
-			IloIntVar[][] statesIntArrayResource = new IloIntVar[getArrayLength()][resourceParameters.get(indexOfResource).getNumberOfSystemStates()];
-
-			for (int timeStep = 0; timeStep < getArrayLength(); timeStep++) {
-				for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
-					statesIntArrayResource[timeStep][state] = getCplex().intVar(0, 1);
+			if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()!=0) {
+				// only create decision variable, if necessary
+				IloIntVar[][] binariesPlaResource = new IloIntVar[resourceParameters.get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
+				for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
+					binariesPlaResource[plaSegment] = getCplex().intVarArray(getArrayLength(), 0 , 1);
 				}
+				getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+BINARY, binariesPlaResource);
+
+				IloNumVar[][] powerInputLinearSegmentsResource = new IloNumVar[resourceParameters.get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
+				for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
+					powerInputLinearSegmentsResource[plaSegment] = getCplex().numVarArray(
+							getArrayLength(),
+							resourceParameters.get(indexOfResource).getMinPowerInput(), 
+							resourceParameters.get(indexOfResource).getMaxPowerInput()
+							);
+				}
+				getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+SEGMENT, powerInputLinearSegmentsResource);
+
 			}
 
-			for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
-				binariesPlaResource[plaSegment] = getCplex().intVarArray(getArrayLength(), 0 ,1);
-				powerInputLinearSegmentsResource[plaSegment] = getCplex().numVarArray(arrayLength,resourceParameters.get(indexOfResource).getMinPowerInput(), resourceParameters.get(indexOfResource).getMaxPowerInput());
+			if (resourceParameters.get(indexOfResource).getNumberOfSystemStates()!=0) {
+				// only create decision variable, if necessary
+				IloIntVar[][] statesIntArrayResource = new IloIntVar[getArrayLength()][resourceParameters.get(indexOfResource).getNumberOfSystemStates()];
+				for (int timeStep = 0; timeStep < getArrayLength(); timeStep++) {
+					for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
+						statesIntArrayResource[timeStep][state] = getCplex().intVar(0, 1);
+					}
+				}
+				getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+STATE, statesIntArrayResource);
 			}
 
-			getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+BINARY, binariesPlaResource);
-			getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+SEGMENT, powerInputLinearSegmentsResource);
-			getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+STATE, statesIntArrayResource);
-
 		}
 
-		/**
+		// ---------------------RESOURCE  - Storage---------------------
+		for (String nameOfStorage : storageSystems) {
+			int indexOfStorage = -1;
+			indexOfStorage = findIndexByName(nameOfStorage);
+			if (indexOfStorage==-1) System.err.println("Storage System not found in list of resourceParameters!");
 
-		// ---------------------RESOURCE 1 - Electrolyzer1---------------------
-		IloNumVar[] powerInputElectrolyzer1 = getCplex().numVarArray(getArrayLength(), resourceParameters.get(0).getMinPowerInput(), resourceParameters.get(0).getMaxPowerInput());
-		getDecisionVariablesVector().put("Electrolyzer1"+"-"+INPUT+"-"+POWER, powerInputElectrolyzer1);
+			// check if resource is actually storage!
+			if (resourceParameters.get(indexOfStorage).isStorage()==true) {
+				IloNumVar[] powerInputStorage = getCplex().numVarArray(
+						getArrayLength(), 
+						resourceParameters.get(indexOfStorage).getMinPowerOutput(), 
+						resourceParameters.get(indexOfStorage).getMaxPowerOutput()
+						);
+				getDecisionVariablesVector().put(nameOfStorage+"-"+INPUT+"-"+POWER, powerInputStorage);
 
-		IloNumVar[] powerOutputElectrolyzer1 = getCplex().numVarArray(getArrayLength(), resourceParameters.get(0).getMinPowerOutput(), resourceParameters.get(0).getMaxPowerOutput());
-		getDecisionVariablesVector().put("Electrolyzer1"+"-"+OUTPUT+"-"+POWER, powerOutputElectrolyzer1);
+				IloNumVar[] stateOfCharge = getCplex().numVarArray(
+						getArrayLength()+1, 
+						resourceParameters.get(indexOfStorage).getMinimumStorageCapacity(), 
+						resourceParameters.get(indexOfStorage).getMaximumStorageCapacity()
+						);
+				getDecisionVariablesVector().put(nameOfStorage+"-"+SOC+"-"+POWER, stateOfCharge);
 
-		IloIntVar[][] binariesPlaElectrolyzer1 = new IloIntVar[resourceParameters.get(0).getNumberOfLinearSegments()][getArrayLength()]; 
-		IloNumVar[][] powerInputElectrolyzer1LinearSegments = new IloNumVar[resourceParameters.get(0).getNumberOfLinearSegments()][getArrayLength()]; 
-		IloIntVar[][] statesIntArrayElectrolyzer1 = new IloIntVar[getArrayLength()][resourceParameters.get(0).getNumberOfSystemStates()];
-
-		for (int timeStep = 0; timeStep < getArrayLength(); timeStep++) {
-			for (int state = 0; state < resourceParameters.get(0).getNumberOfSystemStates(); state++) {
-				statesIntArrayElectrolyzer1[timeStep][state] = getCplex().intVar(0, 1);
-			}
-		}
-
-		for (int plaSegment = 0; plaSegment < resourceParameters.get(0).getNumberOfLinearSegments(); plaSegment++) {
-			binariesPlaElectrolyzer1[plaSegment] = getCplex().intVarArray(getArrayLength(), 0 ,1);
-			powerInputElectrolyzer1LinearSegments[plaSegment] = getCplex().numVarArray(arrayLength,resourceParameters.get(0).getMinPowerInput(), resourceParameters.get(0).getMaxPowerInput());
-		}
-
-		getDecisionVariablesMatrix().put("Electrolyzer1"+"-"+POWER+"-"+BINARY, binariesPlaElectrolyzer1);
-		getDecisionVariablesMatrix().put("Electrolyzer1"+"-"+POWER+"-"+SEGMENT, powerInputElectrolyzer1LinearSegments);
-		getDecisionVariablesMatrix().put("Electrolyzer1"+"-"+POWER+"-"+STATE, statesIntArrayElectrolyzer1);
-
-		// ---------------------RESOURCE 2 - Electrolyzer2---------------------
-		IloNumVar[] powerInputElectrolyzer2 = getCplex().numVarArray( getArrayLength(), resourceParameters.get(1).getMinPowerInput(), resourceParameters.get(1).getMaxPowerInput());
-		getDecisionVariablesVector().put("Electrolyzer2"+"-"+INPUT+"-"+POWER, powerInputElectrolyzer2);
-		IloNumVar[] powerOutputElectrolyzer2 = getCplex().numVarArray( getArrayLength(), resourceParameters.get(1).getMinPowerOutput(), resourceParameters.get(1).getMaxPowerOutput());
-		getDecisionVariablesVector().put("Electrolyzer2"+"-"+OUTPUT+"-"+POWER, powerOutputElectrolyzer2);
-		IloIntVar[][] binariesPlaElectrolyzer2 = new IloIntVar[resourceParameters.get(1).getNumberOfLinearSegments()][ getArrayLength()]; 
-		IloNumVar[][] powerInputElectrolyzer2LinearSegments = new IloNumVar[resourceParameters.get(1).getNumberOfLinearSegments()][ getArrayLength()]; 
-
-		IloIntVar[][] statesIntArrayElectrolyzer2 = new IloIntVar[ getArrayLength()][resourceParameters.get(1).getNumberOfSystemStates()];
-
-		for (int timeStep = 0; timeStep <  getArrayLength(); timeStep++) {
-			for (int state = 0; state < resourceParameters.get(1).getNumberOfSystemStates(); state++) {
-				statesIntArrayElectrolyzer2[timeStep][state] = getCplex().intVar(0, 1);
+				IloNumVar[] powerOutputStorage = getCplex().numVarArray(
+						getArrayLength(), 
+						resourceParameters.get(indexOfStorage).getMinPowerOutput(), 
+						resourceParameters.get(indexOfStorage).getMaxPowerOutput()
+						);
+				getDecisionVariablesVector().put(nameOfStorage+"-"+OUTPUT+"-"+POWER, powerOutputStorage);
 			}
 		}
 
-		for (int plaSegment = 0; plaSegment < resourceParameters.get(1).getNumberOfLinearSegments(); plaSegment++) {
-			binariesPlaElectrolyzer2[plaSegment] = getCplex().intVarArray( getArrayLength(), 0 ,1);
-			powerInputElectrolyzer2LinearSegments[plaSegment] = getCplex().numVarArray( getArrayLength(),resourceParameters.get(1).getMinPowerInput(), resourceParameters.get(1).getMaxPowerInput());
-		}
-		getDecisionVariablesMatrix().put("Electrolyzer2"+"-"+POWER+"-"+BINARY, binariesPlaElectrolyzer2);
-		getDecisionVariablesMatrix().put("Electrolyzer2"+"-"+POWER+"-"+SEGMENT, powerInputElectrolyzer2LinearSegments);
-		getDecisionVariablesMatrix().put("Electrolyzer2"+"-"+POWER+"-"+STATE, statesIntArrayElectrolyzer2);
-
-		 */
-		IloNumVar[] combinedHydrogenOutput = getCplex().numVarArray(getArrayLength(),  0 ,  Double.MAX_VALUE);
-
-		// ---------------------RESOURCE 3 - Storage---------------------
-		IloNumVar[] powerInputStorage = getCplex().numVarArray(getArrayLength(), resourceParameters.get(2).getMinPowerOutput(), resourceParameters.get(2).getMaxPowerOutput());
-		IloNumVar[] stateOfCharge = getCplex().numVarArray(getArrayLength()+1, resourceParameters.get(2).getMinimumStorageCapacity(), resourceParameters.get(2).getMaximumStorageCapacity());
-		IloNumVar[] powerOutputStorage = getCplex().numVarArray(getArrayLength(), resourceParameters.get(2).getMinPowerOutput(), resourceParameters.get(2).getMaxPowerOutput());
-		getDecisionVariablesVector().put("Storage"+"-"+INPUT+"-"+POWER, powerInputStorage);
-		getDecisionVariablesVector().put("Storage"+"-"+SOC+"-"+POWER, stateOfCharge);
-		getDecisionVariablesVector().put("Storage"+"-"+OUTPUT+"-"+POWER, powerOutputStorage);
+		IloNumVar[] combinedHydrogenOutput = getCplex().numVarArray(getArrayLength(),  0, Double.MAX_VALUE);
 	}
 
 	/**
@@ -307,13 +328,15 @@ public class DesignPatterns {
 					new IloNumVar[][] {
 						getDecisionVariableFromVector("Electrolyzer1", INPUT, POWER), 
 						getDecisionVariableFromVector("Electrolyzer2", INPUT, POWER),
+						getDecisionVariableFromVector("Electrolyzer3", INPUT, POWER)
 					}
 					);
 
-			generateCorrelativeDependency(
+			generateRestrictiveDependency(
 					new IloNumVar[][] {
 						getDecisionVariableFromVector("Electrolyzer1", OUTPUT, POWER), 
 						getDecisionVariableFromVector("Electrolyzer2", OUTPUT, POWER),
+						getDecisionVariableFromVector("Electrolyzer3", OUTPUT, POWER)
 					}, 
 					new IloNumVar[][] {
 						getDecisionVariableFromVector("Storage", INPUT, POWER)
@@ -338,6 +361,11 @@ public class DesignPatterns {
 			generateStateSequencesAndHoldingDuration("Electrolyzer2");
 			generateRampLimits("Electrolyzer2", INPUT);
 
+			generateInputOutputRelationship("Electrolyzer3");
+			generateSystemStateSelectionByPowerLimits("Electrolyzer3");
+			generateStateSequencesAndHoldingDuration("Electrolyzer3");
+			generateRampLimits("Electrolyzer3", INPUT);
+			
 			generateEnergyBalanceForStorageSystem("Storage");
 
 			//	System.out.println(cplex);
