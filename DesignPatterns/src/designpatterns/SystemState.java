@@ -20,6 +20,9 @@ public class SystemState {
 	/** The follower states. */
 	int[] followerStates;
 	
+	/** The latency. */
+	double latency; 
+	
 	/** The min power. */
 	double minPower; 
 	
@@ -278,6 +281,20 @@ public class SystemState {
 	 */
 	public void setMaxRampOutput(double maxRampOutput) {
 		this.maxRampOutput = maxRampOutput;
+	}
+
+	/**
+	 * @return the latency
+	 */
+	public double getLatency() {
+		return latency;
+	}
+
+	/**
+	 * @param latency the latency to set
+	 */
+	public void setLatency(double latency) {
+		this.latency = latency;
 	}
 
 }

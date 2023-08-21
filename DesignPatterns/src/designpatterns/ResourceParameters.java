@@ -197,6 +197,29 @@ public class ResourceParameters {
 	}
 	
 	/**
+	 * Adds the system state with latency.
+	 * sets values of minHoldingDuration and maxHoldingDuration to double latencyState
+	 *
+	 * @param stateID the state ID
+	 * @param stateName the state name
+	 * @param latencyState the latency state
+	 * @param idsOfFollowerStates the ids of follower states
+	 * @param minPowerState the min power state
+	 * @param maxPowerState the max power state
+	 */
+	public void addSystemStateWithLatency (int stateID, String stateName, double latencyState,  int[] idsOfFollowerStates, double minPowerState, double maxPowerState) {
+		SystemState state = new SystemState();
+		state.setStateID(stateID);
+		state.setStateName(stateName);
+		state.setMinStateDuration(latencyState);
+		state.setMaxStateDuration(latencyState);
+		state.setFollowerStates(idsOfFollowerStates);
+		state.setMinPower(minPowerState);
+		state.setMaxPower(maxPowerState);
+		this.systemStates.add(state);
+	}
+	
+	/**
 	 * Adds the system state with max power output and ramp output.
 	 *
 	 * @param stateID the state ID

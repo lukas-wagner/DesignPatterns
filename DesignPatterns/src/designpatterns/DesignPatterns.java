@@ -118,10 +118,11 @@ public class DesignPatterns {
 		resource1.setIntercept(29);
 
 		resource1.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
-		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7, 0);
+		//		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7, 0);
 		resource1.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7, maxPowerEl);
 		resource1.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 7,7, 0);
 		resource1.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
+		resource1.addSystemStateWithLatency(1, "latency", 2, new int[] {2}, 0, 7);
 		resource1.setNumberOfSystemStates(resource1.getSystemStates().size());
 		// add object to Array List
 		resourceParameters.add(resource1);		
@@ -441,35 +442,35 @@ public class DesignPatterns {
 						counter++; 
 					}
 				}
-				
+
 				String headerOptimizationResults = null; 
 				headerOptimizationResults ="System-INPUT-POWER";
-				headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer1-INPUT-POWER";
-				headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer1-Output-POWER";
-				headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer2-INPUT-POWER";
-				headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer2-Output-POWER";
-				headerOptimizationResults = headerOptimizationResults +","+"Storage-INPUT-POWER";
-				headerOptimizationResults = headerOptimizationResults +","+"Storage-Output-POWER";
-				headerOptimizationResults = headerOptimizationResults +","+"Storage-SOC";
-					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT).length; j++) {
-						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer1-POWER-SEGMENT-"+Integer.toString(j);
-					}
-					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer1",POWER,BINARY).length; j++) {
-						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer1-POWER-Binary-"+Integer.toString(j);
-					}
-					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
-						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer1-POWER-State-"+Integer.toString(j);
-					}
-					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,SEGMENT).length; j++) {
-						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer2-POWER-SEGMENT-"+Integer.toString(j);
-					}
-					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY).length; j++) {
-						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer2-POWER-BINARY-"+Integer.toString(j);
-					}
-					for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
-						headerOptimizationResults = headerOptimizationResults +","+"Electrolyzer2-POWER-STATE-"+Integer.toString(j);
-					}
-			
+				headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer1-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer1-Output-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-Output-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Storage-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Storage-Output-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Storage-SOC";
+				for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT).length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer1-POWER-SEGMENT-"+Integer.toString(j);
+				}
+				for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer1",POWER,BINARY).length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer1-POWER-Binary-"+Integer.toString(j);
+				}
+				for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer1-POWER-State-"+Integer.toString(j);
+				}
+				for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,SEGMENT).length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-SEGMENT-"+Integer.toString(j);
+				}
+				for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY).length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-BINARY-"+Integer.toString(j);
+				}
+				for (int j = 0; j < getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-STATE-"+Integer.toString(j);
+				}
+
 				writeResultsToFile(optimizationResults, "designpatterns_from-method", headerOptimizationResults);
 			} else {
 				System.out.println("Model not solved");
@@ -1091,8 +1092,10 @@ public class DesignPatterns {
 			for (int i = 0; i < contentToWrite.length; i++) {
 				myWriter.write(Double.toString(i));
 				for(int j = 0; j < contentToWrite[0].length; j++) {
-					myWriter.write(",");
-					myWriter.write(Double.toString(contentToWrite[i][j]));
+					//					myWriter.write(",");
+					myWriter.write(";"); // Use semicolon as separator
+					//					myWriter.write(Double.toString(contentToWrite[i][j]));
+					myWriter.write(Double.toString(contentToWrite[i][j]).replace(".", ",")); // Replace decimal point with comma
 				}
 				myWriter.write("\n");
 			}
