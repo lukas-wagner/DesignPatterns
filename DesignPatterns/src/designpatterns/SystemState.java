@@ -21,7 +21,7 @@ public class SystemState {
 	int[] followerStates;
 	
 	/** The latency. */
-	double latency; 
+	int latency; 
 	
 	/** The min power. */
 	double minPower; 
@@ -286,14 +286,14 @@ public class SystemState {
 	/**
 	 * @return the latency
 	 */
-	public double getLatency() {
+	public int getLatency() {
 		return latency;
 	}
 
 	/**
 	 * @param latency the latency to set
 	 */
-	public void setLatency(double latency) {
+	public void setLatency(int latency) {
 		this.latency = latency;
 	}
 

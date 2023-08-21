@@ -7,70 +7,81 @@ import java.util.List;
  * ResourceParameters for Design Patterns.
  */
 public class ResourceParameters {
-	
+
 	/** The name. */
 	String name; 
-	
+
+	/** The energy carrier input. */
+	String energyCarrierInput; 
+
+	/** The energy carrier output. */
+	String energyCarrierOutput; 
+
 	/** The relevant energy carrier. */
 	String relevantEnergyCarrier; 
 	/** The min/max power input. */
 	double minPowerInput; 
-	
+
 	/** The max power input. */
 	double maxPowerInput = Double.MAX_VALUE; 
 
 	/** The min/max power output. */
 	double minPowerOutput;
-	
+
 	/** The max power output. */
 	double maxPowerOutput = Double.MAX_VALUE;
 
 	/** The min/max ramp. */
 	double minRamp; 
-	
+
 	/** The max ramp. */
 	double maxRamp;
 
+	/** The latency of output. */
+	int latencyOfOutput;
+
 	/** The system states. */
 	List<SystemState> systemStates = new ArrayList<SystemState>();
-	
+
 	/** The number of system states. */
 	int numberOfSystemStates;
 
 	/**  Efficiencies/IO Relation. */
 	double efficiency; 
-	
+
 	/** The intercept. */
 	double slope, intercept; 
 
 	/** The pla. */
 	List<PiecewiseLinearApproximation> pla = new ArrayList<PiecewiseLinearApproximation>();
-	
+
 	/** The number of linear segments. */
 	int numberOfLinearSegments; 
 
-
 	/**  Storage Specific parameters. */
 	boolean isStorage = false; 
-	
+
 	/** The maximum storage capacity. */
 	double maximumStorageCapacity;
-	
+
 	/** The minimum storage capacity. */
 	double minimumStorageCapacity; 
-	
+
 	/** The inital capacity. */
 	double initalCapacity; 
-	
+
 	/** The static power loss. */
-	double staticPowerLoss;
+	double staticEnergyLoss;
 	
+	/** The dynamic energy loss. */
+	double dynamicEnergyLoss;
+
 	/** The efficiency input storage. */
 	double efficiencyInputStorage = 1; 
-	
+
 	/** The efficiency output storage. */
 	double efficiencyOutputStorage = 1; 
-	
+
 	/** The efficiency output reciprocal. */
 	double efficiencyOutputReciprocal = 1/efficiencyOutputStorage;
 
@@ -91,7 +102,7 @@ public class ResourceParameters {
 		this.pla.add(plaItem);
 	}
 
-	
+
 	/**
 	 * Adds the system state.
 	 *
@@ -114,7 +125,7 @@ public class ResourceParameters {
 		state.setMaxPower(maxPowerState);
 		this.systemStates.add(state);
 	}
-	
+
 	/**
 	 * Adds the system state with ramp.
 	 *
@@ -141,7 +152,7 @@ public class ResourceParameters {
 		state.setMaxRampInput(maxRampState);
 		this.systemStates.add(state);
 	}
-	
+
 	/**
 	 * Adds the system state with max power output.
 	 *
@@ -166,7 +177,7 @@ public class ResourceParameters {
 		state.setMaxPowerOutput(maxPowerOutputState);
 		this.systemStates.add(state);
 	}
-	
+
 	/**
 	 * Adds the system state with max power output and ramp input.
 	 *
@@ -195,7 +206,7 @@ public class ResourceParameters {
 		state.setMaxRampInput(maxRampStateInput);
 		this.systemStates.add(state);
 	}
-	
+
 	/**
 	 * Adds the system state with latency.
 	 * sets values of minHoldingDuration and maxHoldingDuration to double latencyState
@@ -218,6 +229,7 @@ public class ResourceParameters {
 		state.setMaxPower(maxPowerState);
 		this.systemStates.add(state);
 	}
+
 	
 	/**
 	 * Adds the system state with max power output and ramp output.
@@ -247,7 +259,7 @@ public class ResourceParameters {
 		state.setMaxRampOutput(maxRampStateOutput);
 		this.systemStates.add(state);
 	}
-	
+
 	/**
 	 * Adds the system state with max power output and ramp input output.
 	 *
@@ -562,22 +574,22 @@ public class ResourceParameters {
 
 
 	/**
-	 * Gets the static power loss.
+	 * Gets the static energy loss (energy loss independent of power flows or storage level).
 	 *
-	 * @return the staticPowerLoss
+	 * @return the staticEnergyLoss
 	 */
-	public double getStaticPowerLoss() {
-		return staticPowerLoss;
+	public double getStaticEnergyLoss() {
+		return staticEnergyLoss;
 	}
 
 
 	/**
-	 * Sets the static power loss.
+	 * Sets the static energy loss (energy loss independent of power flows or storage level).
 	 *
-	 * @param staticPowerLoss the staticPowerLoss to set
+	 * @param staticEnergyLoss the staticPowerLoss to set
 	 */
-	public void setStaticPowerLoss(double staticPowerLoss) {
-		this.staticPowerLoss = staticPowerLoss;
+	public void setStaticEnergyLoss(double staticEnergyLoss) {
+		this.staticEnergyLoss = staticEnergyLoss;
 	}
 
 	/**
@@ -708,6 +720,84 @@ public class ResourceParameters {
 	 */
 	public void setNumberOfSystemStates(int numberOfSystemStates) {
 		this.numberOfSystemStates = numberOfSystemStates;
+	}
+
+
+	/**
+	 * @return the latencyOfOutput
+	 */
+	public int getLatencyOfOutput() {
+		return latencyOfOutput;
+	}
+
+
+	/**
+	 * @param latencyOfOutput the latencyOfOutput to set
+	 */
+	public void setLatencyOfOutput(int latencyOfOutput) {
+		this.latencyOfOutput = latencyOfOutput;
+	}
+
+
+	/**
+	 * @return the energyCarrierInput
+	 */
+	public String getEnergyCarrierInput() {
+		return energyCarrierInput;
+	}
+
+	/**
+	 * Sets the energy carrier of both sides.
+	 *
+	 * @param energyCarrier the new energy carrier
+	 */
+	public void setEnergyCarrier(String energyCarrier) {
+		this.energyCarrierInput = energyCarrier;
+		this.energyCarrierOutput = energyCarrier;
+	} 
+
+	/**
+	 * @param energyCarrierInput the energyCarrierInput to set
+	 */
+	public void setEnergyCarrierInput(String energyCarrierInput) {
+		//		this.energyCarrierInput = energyCarrierInput;
+	}
+
+
+	/**
+	 * @return the energyCarrierOutput
+	 */
+	public String getEnergyCarrierOutput() {
+		return energyCarrierOutput;
+	}
+
+
+	/**
+	 * @param energyCarrierOutput the energyCarrierOutput to set
+	 */
+	public void setEnergyCarrierOutput(String energyCarrierOutput) {
+		this.energyCarrierOutput = energyCarrierOutput;
+	}
+
+
+	/**
+	 * Gets the dynamic energy loss (energy loss dependent of power flows or storage level).
+	 *
+	 * @return the dynamicEnergyLoss
+	 */
+	public double getDynamicEnergyLoss() {
+		return dynamicEnergyLoss;
+	}
+
+
+	/**
+	 * Sets the dynamic energy loss (energy loss dependent of power flows or storage level)
+	 * loss = dynamicLoss * (maxSOC - SOC[i])
+	 *
+	 * @param dynamicEnergyLoss the dynamicEnergyLoss to set 
+	 */
+	public void setDynamicEnergyLoss(double dynamicEnergyLoss) {
+		this.dynamicEnergyLoss = dynamicEnergyLoss;
 	} 
 
 }
