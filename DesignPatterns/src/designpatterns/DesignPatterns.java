@@ -967,10 +967,10 @@ public class DesignPatterns {
 										getCplex().sum(
 												getCplex().sum(
 														getCplex().prod(powerOutputStorage[timestep-1], resourceParameters.get(indexOfResource).getEfficiencyOutputReciprocal()*getTimeInterval()),
-														resourceParameters.get(indexOfResource).getStaticEnergyLoss()*timeInterval
+														resourceParameters.get(indexOfResource).getStaticEnergyLoss()*getTimeInterval()
 														), 
 												getCplex().prod(
-														resourceParameters.get(indexOfResource).getDynamicEnergyLoss(), 
+														resourceParameters.get(indexOfResource).getDynamicEnergyLoss()*getTimeInterval(), 
 														getCplex().diff(
 																resourceParameters.get(indexOfResource).getMaximumStorageCapacity(),
 																stateOfCharge[timestep]
