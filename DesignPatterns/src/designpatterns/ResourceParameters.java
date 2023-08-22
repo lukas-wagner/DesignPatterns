@@ -47,6 +47,9 @@ public class ResourceParameters {
 	/** The number of system states. */
 	int numberOfSystemStates;
 
+	/** The initial system state. */
+	int initialSystemState; 
+	
 	/**  Efficiencies/IO Relation. */
 	double efficiency; 
 
@@ -86,7 +89,7 @@ public class ResourceParameters {
 	/** The efficiency output storage. */
 	double efficiencyOutputStorage = 1; 
 
-	/** The efficiency output reciprocal. */
+	/** The efficiency output reciprocal. */ 
 	double efficiencyOutputReciprocal = 1/efficiencyOutputStorage;
 
 	/**
@@ -818,6 +821,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the reference dynamic energy loss.
+	 *
 	 * @return the referenceDynamicEnergyLoss
 	 */
 	public double getReferenceDynamicEnergyLoss() {
@@ -826,10 +831,28 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the reference dynamic energy loss.
+	 *
 	 * @param referenceDynamicEnergyLoss the referenceDynamicEnergyLoss to set
 	 */
 	public void setReferenceDynamicEnergyLoss(double referenceDynamicEnergyLoss) {
 		this.referenceDynamicEnergyLoss = referenceDynamicEnergyLoss;
+	}
+
+
+	/**
+	 * @return the initialSystemState
+	 */
+	public int getInitialSystemState() {
+		return initialSystemState;
+	}
+
+
+	/**
+	 * @param initialSystemState the initialSystemState to set
+	 */
+	public void setInitialSystemState(int initialSystemState) {
+		this.initialSystemState = initialSystemState;
 	} 
 
 }

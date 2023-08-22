@@ -1,6 +1,7 @@
 package designpatterns;
 
 import ilog.concert.IloException;
+import ilog.concert.IloIntVar;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
@@ -34,6 +35,7 @@ public class ElectrolyzerOptimization {
 		setOptimizationParameters();
 		electrolyzerBaseModel();
 		electrolyzerModelI();
+		electrolyzerModelII();
 	}
 
 	/**
@@ -71,12 +73,15 @@ public class ElectrolyzerOptimization {
 		resource1.createPlaList(14.946,135.92,46.914,maxPowerEl);
 		resource1.setNumberOfLinearSegments(resource1.getPla().size());
 
+		
 		resource1.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
 		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
 		resource1.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7, maxPowerEl);
 		resource1.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 0.52,0.52, 0);
 		resource1.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
 		resource1.setNumberOfSystemStates(resource1.getSystemStates().size());
+		resource1.setInitialSystemState(0);
+		
 		// add object to Array List
 		designpatterns.DesignPatterns.getResourceParameters().add(resource1);
 
@@ -108,6 +113,8 @@ public class ElectrolyzerOptimization {
 		resource2.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 0.52, 0.52, 0);
 		resource2.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
 		resource2.setNumberOfSystemStates(resource2.getSystemStates().size());
+		resource2.setInitialSystemState(0);
+
 		designpatterns.DesignPatterns.getResourceParameters().add(resource2);
 
 		ResourceParameters resource3 = new  ResourceParameters();
@@ -121,9 +128,11 @@ public class ElectrolyzerOptimization {
 		resource3.setEfficiencyOutputStorage(1);
 		resource3.setInitalCapacity(0);
 		resource3.setMaximumStorageCapacity(5000);
+		//		resource3.setStaticEnergyLoss(0);
+		//		resource3.setDynamicEnergyLoss(0);
+		//		resource3.setReferenceDynamicEnergyLoss(resource3.maximumStorageCapacity);
 		designpatterns.DesignPatterns.getResourceParameters().add(resource3);
 	}
-
 
 
 	/**
@@ -132,13 +141,13 @@ public class ElectrolyzerOptimization {
 	 * @throws IloException the ilo exception
 	 */
 	public static void electrolyzerBaseModel () throws IloException {
-		String nameOfModel = "baseModel";
+		String nameOfModel = "baseModel-";
 		try {
 			//additional parameters for system
 			double maxPowerSystem = 100; 
 			double constantHydrogenDemand = 2*1000*designpatterns.DesignPatterns.getTimeInterval();
 
-			//-------------------------------------------------------------------- Decision Variables --------------------------------------------------------------------
+			//-------------------------------------------------------------------- Create Decision Variables --------------------------------------------------------------------
 			designpatterns.DesignPatterns.creationOfDecisionVariables(maxPowerSystem);
 
 			// ------------------------------------------------------------------------ CONSTRAINTS--------------------------------------------------------------------
@@ -285,7 +294,7 @@ public class ElectrolyzerOptimization {
 	 * @throws IloException the ilo exception
 	 */
 	public static void electrolyzerModelI () throws IloException {
-		String nameOfModel = "modelI";
+		String nameOfModel = "model1-";
 		try {
 			//additional parameters for system
 			double maxPowerSystem = 100; 
@@ -296,7 +305,10 @@ public class ElectrolyzerOptimization {
 
 			// ------------------------------------------------------------------------ CONSTRAINTS--------------------------------------------------------------------
 			for (int i = 0; i < designpatterns.DesignPatterns.getArrayLength(); i++) {
-				designpatterns.DesignPatterns.getCplex().addEq(designpatterns.DesignPatterns.getDecisionVariableFromVector("System", OUTPUT, POWER)[i], constantHydrogenDemand);
+				designpatterns.DesignPatterns.getCplex().addEq(
+						designpatterns.DesignPatterns.getDecisionVariableFromVector("System", OUTPUT, POWER)[i], 
+						constantHydrogenDemand
+						);
 			}
 
 			// ------------------------------------------------------------------------ Use of Design Patterns--------------------------------------------------------------------
@@ -442,6 +454,197 @@ public class ElectrolyzerOptimization {
 				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
 					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-STATE-"+Integer.toString(j);
 				}
+				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "designpatterns_from-method"+nameOfModel, headerOptimizationResults);
+			} else {
+				System.out.println("Model not solved");
+			}
+		}
+
+		catch (IloException exc) {
+			exc.printStackTrace();
+		}
+		finally {
+			if (designpatterns.DesignPatterns.getCplex()!=null)  {
+				designpatterns.DesignPatterns.getCplex().close();
+				designpatterns.DesignPatterns.globalCplex=null;
+			}
+		}
+	}
+
+	
+	/**
+	 * Electrolyzer  model ii.
+	 *
+	 * @throws IloException the ilo exception
+	 */
+	public static void electrolyzerModelII () throws IloException {
+		String nameOfModel = "model2-";
+		try {
+			//additional parameters for system
+			double maxPowerSystem = 100; 
+			double constantHydrogenDemand = 2*900*designpatterns.DesignPatterns.getTimeInterval();
+
+			//-------------------------------------------------------------------- Decision Variables --------------------------------------------------------------------
+			designpatterns.DesignPatterns.creationOfDecisionVariables(maxPowerSystem);
+
+			// ------------------------------------------------------------------------ CONSTRAINTS--------------------------------------------------------------------
+			for (int i = 0; i < designpatterns.DesignPatterns.getArrayLength(); i++) {
+				designpatterns.DesignPatterns.getCplex().addEq(designpatterns.DesignPatterns.getDecisionVariableFromVector("System", OUTPUT, POWER)[i], constantHydrogenDemand);
+			}
+
+			// ------------------------------------------------------------------------ Use of Design Patterns--------------------------------------------------------------------
+			designpatterns.DesignPatterns.generateCorrelativeDependency(
+					new IloNumVar[][] {designpatterns.DesignPatterns.getDecisionVariableFromVector("System", INPUT, POWER)}, 
+					new IloNumVar[][] {
+						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", INPUT, POWER), 
+						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", INPUT, POWER),
+					}
+					);
+
+			IloIntVar[][][] restrictiveDepElectrolyzersStorage =  designpatterns.DesignPatterns.generateRestrictiveDependency(
+					new IloNumVar[][] {
+						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", OUTPUT, POWER), 
+						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", OUTPUT, POWER),
+					}, 
+					new IloNumVar[][] {
+						designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", INPUT, POWER)
+					}
+					);
+
+			designpatterns.DesignPatterns.generateCorrelativeDependency(
+					new IloNumVar[][] {designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", OUTPUT, POWER)}, 
+					new IloNumVar[][] {designpatterns.DesignPatterns.getDecisionVariableFromVector("System", OUTPUT, POWER)}
+					);
+
+			designpatterns.DesignPatterns.generateInputOutputRelationship("Electrolyzer1");
+			designpatterns.DesignPatterns.generateSystemStateSelectionByPowerLimits("Electrolyzer1");
+			designpatterns.DesignPatterns.generateStateSequencesAndHoldingDuration("Electrolyzer1");
+			designpatterns.DesignPatterns.generateRampLimits("Electrolyzer1", INPUT);
+
+
+			designpatterns.DesignPatterns.generateInputOutputRelationship("Electrolyzer2");
+			designpatterns.DesignPatterns.generateSystemStateSelectionByPowerLimits("Electrolyzer2");
+			designpatterns.DesignPatterns.generateStateSequencesAndHoldingDuration("Electrolyzer2");
+			designpatterns.DesignPatterns.generateRampLimits("Electrolyzer2", INPUT);
+
+			designpatterns.DesignPatterns.generateEnergyBalanceForStorageSystem("Storage");
+
+			designpatterns.DesignPatterns.getCplex().exportModel("model.lp");
+
+			// set objective function 
+			IloLinearNumExpr objective = designpatterns.DesignPatterns.getCplex().linearNumExpr();
+			for (int i = 0; i < designpatterns.DesignPatterns.getArrayLength(); i++) {
+				objective.addTerm(designpatterns.DesignPatterns.getTimeInterval()*designpatterns.DesignPatterns.getElectricityPrice()[i], designpatterns.DesignPatterns.getDecisionVariableFromVector("System", INPUT, POWER)[i]);
+				objective.addTerm(2000, designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1", POWER, STATE)[i][1]);
+				objective.addTerm(2000, designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2", POWER, STATE)[i][1]);
+			}
+			designpatterns.DesignPatterns.getCplex().addMinimize(objective);
+
+			// solver specific parameters
+			//cplex.setParam(IloCplex.Param.Emphasis.Numerical, true);
+			designpatterns.DesignPatterns.getCplex().setParam(IloCplex.Param.MIP.Tolerances.MIPGap, designpatterns.DesignPatterns.getOptimalityGap());
+			long start = System.currentTimeMillis();
+			System.out.println("cplex solve");
+			if (designpatterns.DesignPatterns.getCplex().solve()) {
+				long end = System.currentTimeMillis();
+				long solvingTime = 	(end - start);
+				System.out.println("obj = "+designpatterns.DesignPatterns.getCplex().getObjValue());
+				System.out.println(designpatterns.DesignPatterns.getCplex().getCplexStatus());
+
+				int sizeOfResultsMatrix = designpatterns.DesignPatterns.getDecisionVariablesMatrix().size()*40+designpatterns.DesignPatterns.getDecisionVariablesVector().size(); 
+
+				double [][] optimizationResults = new double [designpatterns.DesignPatterns.getArrayLength()+1][sizeOfResultsMatrix];
+
+				for (int i = 1; i < designpatterns.DesignPatterns.getArrayLength()+1; i++) {
+					int counter = 0; 
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("System", INPUT, POWER)[i-1]);
+					counter++; 
+
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", INPUT, POWER)[i-1]);
+					counter++; 
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", OUTPUT, POWER)[i-1]);
+					counter++; 
+
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", INPUT, POWER)[i-1]);
+					counter++;
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", OUTPUT, POWER)[i-1]);
+					counter++; 
+
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", INPUT, POWER)[i-1]);
+					counter++; 
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", OUTPUT, POWER)[i-1]);
+					counter++; 
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", SOC, POWER)[i-1]);
+					counter++; 
+
+					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT).length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT)[j][i-1]);
+						counter++; 
+					}
+					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,BINARY).length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,BINARY)[j][i-1]);
+						counter++; 
+					}
+
+
+					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,STATE)[i-1][j]);
+						counter++; 
+					}
+					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,SEGMENT).length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,SEGMENT)[j][i-1]);
+						counter++; 
+					}
+					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY).length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY)[j][i-1]);
+						counter++; 
+					}
+					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[i-1][j]);
+						counter++; 
+					}
+					
+					for (int j = 0; j < restrictiveDepElectrolyzersStorage.length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(restrictiveDepElectrolyzersStorage[0][i-1][0]);
+						counter++; 
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(restrictiveDepElectrolyzersStorage[0][i-1][1]);
+						counter++; 
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(restrictiveDepElectrolyzersStorage[1][i-1][0]);
+						counter++; 
+					}
+
+
+				}
+
+				String headerOptimizationResults = null; 
+				headerOptimizationResults ="System-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer1-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer1-Output-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-Output-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Storage-INPUT-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Storage-Output-POWER";
+				headerOptimizationResults = headerOptimizationResults +";"+"Storage-SOC";
+
+				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT).length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer1-POWER-SEGMENT-"+Integer.toString(j);
+				}
+				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,BINARY).length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer1-POWER-Binary-"+Integer.toString(j);
+				}
+				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer1-POWER-State-"+Integer.toString(j);
+				}
+				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,SEGMENT).length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-SEGMENT-"+Integer.toString(j);
+				}
+				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY).length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-BINARY-"+Integer.toString(j);
+				}
+				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
+					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-STATE-"+Integer.toString(j);
+				}
+				headerOptimizationResults = headerOptimizationResults + ";binaryOutput1;binaryOutput2;binaryInput";
 				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "designpatterns_from-method"+nameOfModel, headerOptimizationResults);
 			} else {
 				System.out.println("Model not solved");
