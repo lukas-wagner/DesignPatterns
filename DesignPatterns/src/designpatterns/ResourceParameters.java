@@ -3,6 +3,7 @@ package designpatterns;
 import java.util.ArrayList;
 import java.util.List;
 
+// TODO: Auto-generated Javadoc
 /**
  * ResourceParameters for Design Patterns.
  */
@@ -75,6 +76,9 @@ public class ResourceParameters {
 	
 	/** The dynamic energy loss. */
 	double dynamicEnergyLoss;
+	
+	/** The reference value for dynamic energy loss. */
+	double referenceDynamicEnergyLoss; 
 
 	/** The efficiency input storage. */
 	double efficiencyInputStorage = 1; 
@@ -724,6 +728,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the latency of output.
+	 *
 	 * @return the latencyOfOutput
 	 */
 	public int getLatencyOfOutput() {
@@ -732,6 +738,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the latency of output.
+	 *
 	 * @param latencyOfOutput the latencyOfOutput to set
 	 */
 	public void setLatencyOfOutput(int latencyOfOutput) {
@@ -740,6 +748,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the energy carrier input.
+	 *
 	 * @return the energyCarrierInput
 	 */
 	public String getEnergyCarrierInput() {
@@ -757,6 +767,8 @@ public class ResourceParameters {
 	} 
 
 	/**
+	 * Sets the energy carrier input.
+	 *
 	 * @param energyCarrierInput the energyCarrierInput to set
 	 */
 	public void setEnergyCarrierInput(String energyCarrierInput) {
@@ -765,6 +777,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the energy carrier output.
+	 *
 	 * @return the energyCarrierOutput
 	 */
 	public String getEnergyCarrierOutput() {
@@ -773,6 +787,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the energy carrier output.
+	 *
 	 * @param energyCarrierOutput the energyCarrierOutput to set
 	 */
 	public void setEnergyCarrierOutput(String energyCarrierOutput) {
@@ -792,12 +808,28 @@ public class ResourceParameters {
 
 	/**
 	 * Sets the dynamic energy loss (energy loss dependent of power flows or storage level)
-	 * loss = dynamicLoss * (maxSOC - SOC[i])
+	 * loss = dynamicLoss * (maxSOC - SOC[i]).
 	 *
-	 * @param dynamicEnergyLoss the dynamicEnergyLoss to set 
+	 * @param dynamicEnergyLoss the dynamicEnergyLoss to set
 	 */
 	public void setDynamicEnergyLoss(double dynamicEnergyLoss) {
 		this.dynamicEnergyLoss = dynamicEnergyLoss;
+	}
+
+
+	/**
+	 * @return the referenceDynamicEnergyLoss
+	 */
+	public double getReferenceDynamicEnergyLoss() {
+		return referenceDynamicEnergyLoss;
+	}
+
+
+	/**
+	 * @param referenceDynamicEnergyLoss the referenceDynamicEnergyLoss to set
+	 */
+	public void setReferenceDynamicEnergyLoss(double referenceDynamicEnergyLoss) {
+		this.referenceDynamicEnergyLoss = referenceDynamicEnergyLoss;
 	} 
 
 }
