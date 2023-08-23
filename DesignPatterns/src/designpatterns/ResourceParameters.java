@@ -48,7 +48,7 @@ public class ResourceParameters {
 	int numberOfSystemStates;
 
 	/** The initial system state. */
-	int initialSystemState; 
+	int initialSystemState = 0; 
 	
 	/**  Efficiencies/IO Relation. */
 	double efficiency; 

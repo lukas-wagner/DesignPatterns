@@ -73,7 +73,7 @@ public class DesignPatterns {
 	 */
 	public static void main(String[] args) throws IloException {
 		setOptimizationParameters();
-		optimizationModelWithMethods();
+		//		optimizationModelWithMethods();
 	}
 
 	/**
@@ -212,7 +212,7 @@ public class DesignPatterns {
 					resourceParameters.get(indexOfResource).getMaxPowerInput()
 					);
 			getDecisionVariablesVector().put(nameOfResource+"-"+INPUT+"-"+POWER, powerInputResource);
-//			System.out.println("Input variable "+ nameOfResource);
+			//			System.out.println("Input variable "+ nameOfResource);
 
 			IloNumVar[] powerOutputResource = getCplex().numVarArray(
 					getArrayLength(), 
@@ -220,8 +220,8 @@ public class DesignPatterns {
 					resourceParameters.get(indexOfResource).getMaxPowerOutput()
 					);
 			getDecisionVariablesVector().put(nameOfResource+"-"+OUTPUT+"-"+POWER, powerOutputResource);
-//			System.out.println("Output variable "+ nameOfResource);
-			
+				//		System.out.println("Output variable "+ nameOfResource);
+
 			if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()!=0) {
 				// only create decision variable, if necessary
 				IloIntVar[][] binariesPlaResource = new IloIntVar[resourceParameters.get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
@@ -229,8 +229,8 @@ public class DesignPatterns {
 					binariesPlaResource[plaSegment] = getCplex().intVarArray(getArrayLength(), 0 , 1);
 				}
 				getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+BINARY, binariesPlaResource);
-//				System.out.println("binary power variable "+ nameOfResource);
-				
+				//				System.out.println("binary power variable "+ nameOfResource);
+
 				IloNumVar[][] powerInputLinearSegmentsResource = new IloNumVar[resourceParameters.get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
 				for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
 					powerInputLinearSegmentsResource[plaSegment] = getCplex().numVarArray(
@@ -240,19 +240,19 @@ public class DesignPatterns {
 							);
 				}
 				getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+SEGMENT, powerInputLinearSegmentsResource);
-//				System.out.println("power segment variable "+ nameOfResource);
-				}
+				//				System.out.println("power segment variable "+ nameOfResource);
+			}
 
 			if (resourceParameters.get(indexOfResource).getNumberOfSystemStates()!=0) {
 				// only create decision variable, if necessary
-				IloIntVar[][] statesIntArrayResource = new IloIntVar[getArrayLength()][resourceParameters.get(indexOfResource).getNumberOfSystemStates()];
-				for (int timeStep = 0; timeStep < getArrayLength(); timeStep++) {
+				IloIntVar[][] statesIntArrayResource = new IloIntVar[getArrayLength()+1][resourceParameters.get(indexOfResource).getNumberOfSystemStates()];
+				for (int timeStep = 0; timeStep < getArrayLength()+1; timeStep++) {
 					for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
 						statesIntArrayResource[timeStep][state] = getCplex().intVar(0, 1);
 					}
 				}
 				getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+STATE, statesIntArrayResource);
-//				System.out.println("state variable "+ nameOfResource);
+				//				System.out.println("state variable "+ nameOfResource);
 			}
 			System.out.println("Created variables for "+ nameOfResource);
 		}
@@ -274,21 +274,21 @@ public class DesignPatterns {
 						resourceParameters.get(indexOfStorage).getMaxPowerOutput()
 						);
 				getDecisionVariablesVector().put(nameOfStorage+"-"+INPUT+"-"+POWER, powerInputStorage);
-//				System.out.println("power input variable "+ nameOfStorage);
+				//				System.out.println("power input variable "+ nameOfStorage);
 				IloNumVar[] stateOfCharge = getCplex().numVarArray(
 						getArrayLength()+1, 
 						resourceParameters.get(indexOfStorage).getMinimumStorageCapacity(), 
 						resourceParameters.get(indexOfStorage).getMaximumStorageCapacity()
 						);
 				getDecisionVariablesVector().put(nameOfStorage+"-"+SOC+"-"+POWER, stateOfCharge);
-//				System.out.println("soc variable "+ nameOfStorage);
+				//				System.out.println("soc variable "+ nameOfStorage);
 				IloNumVar[] powerOutputStorage = getCplex().numVarArray(
 						getArrayLength(), 
 						resourceParameters.get(indexOfStorage).getMinPowerOutput(), 
 						resourceParameters.get(indexOfStorage).getMaxPowerOutput()
 						);
 				getDecisionVariablesVector().put(nameOfStorage+"-"+OUTPUT+"-"+POWER, powerOutputStorage);
-//				System.out.println("power output variable "+ nameOfStorage);
+				//				System.out.println("power output variable "+ nameOfStorage);
 
 			}
 			System.out.println("Created variables for "+ nameOfStorage);
@@ -605,15 +605,17 @@ public class DesignPatterns {
 				for (int plasegment = 0; plasegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plasegment++) {
 					getCplex().add(
 							getCplex().ifThen(
-									getCplex().and(
-											getCplex().le(binariesPlaResource[plasegment][timestep], 1),
-											getCplex().ge(binariesPlaResource[plasegment][timestep], 0.9)
-											),
+//									getCplex().and(
+//											getCplex().le(binariesPlaResource[plasegment][timestep], 1),
+//											getCplex().ge(binariesPlaResource[plasegment][timestep], 0.9)
+//											),
+									getCplex().eq(binariesPlaResource[plasegment][timestep], 1),
 									getCplex().eq(powerOutputResource[timestep],
 											getCplex().sum(
 													resourceParameters.get(indexOfResource).getPla().get(plasegment).getIntercept(),
 													getCplex().prod(
-															powerInputResourceLinearSegments[plasegment][timestep],
+															powerInputSum,
+//															powerInputResourceLinearSegments[plasegment][timestep],
 															resourceParameters.get(indexOfResource).getPla().get(plasegment).getSlope()
 															)
 													)
@@ -645,20 +647,43 @@ public class DesignPatterns {
 		IloNumVar[] powerOutputResource  = getDecisionVariableFromVector(nameOfResource, OUTPUT, POWER);
 		IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, STATE);
 
-		for (int timestep = 0; timestep < getArrayLength(); timestep++) {
+		//set initial system state, all other states = 0 
+		getCplex().addEq(statesIntArrayResource[0][resourceParameters.get(indexOfResource).getInitialSystemState()], 1);
+		//		getCplex().addEq(statesIntArrayResource[0][1], 1);
+		getCplex().addEq(getCplex().sum(statesIntArrayResource[0]), 1);
+
+		for (int timestep = 1; timestep < getArrayLength()+1; timestep++) {
 			getCplex().addEq(getCplex().sum(statesIntArrayResource[timestep]), 1);
 
 			IloNumExpr powerMinSum = getCplex().numExpr();
 			IloNumExpr powerMaxSum = getCplex().numExpr();
 			IloNumExpr powerOutputMaxSum = getCplex().numExpr();
 			for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
-				powerMinSum = getCplex().sum(powerMinSum, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMinPower()));
-				powerMaxSum = getCplex().sum(powerMaxSum, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxPower()));
-				powerOutputMaxSum = getCplex().sum(powerOutputMaxSum, getCplex().prod(statesIntArrayResource[timestep][state], resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxPowerOutput()));
+				powerMinSum = getCplex().sum(
+						powerMinSum, 
+						getCplex().prod(
+								statesIntArrayResource[timestep][state], 
+								resourceParameters.get(indexOfResource).getSystemStates().get(state).getMinPower()
+								)
+						);
+				powerMaxSum = getCplex().sum(
+						powerMaxSum, 
+						getCplex().prod(
+								statesIntArrayResource[timestep][state], 
+								resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxPower()
+								)
+						);
+				powerOutputMaxSum = getCplex().sum(
+						powerOutputMaxSum, 
+						getCplex().prod(
+								statesIntArrayResource[timestep][state], 
+								resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxPowerOutput()
+								)
+						);
 			}
-			getCplex().addGe(powerInputResource[timestep], powerMinSum);
-			getCplex().addLe(powerInputResource[timestep], powerMaxSum);
-			getCplex().addLe(powerOutputResource[timestep], powerOutputMaxSum);
+			getCplex().addGe(powerInputResource[timestep-1], powerMinSum);
+			getCplex().addLe(powerInputResource[timestep-1], powerMaxSum);
+			getCplex().addLe(powerOutputResource[timestep-1], powerOutputMaxSum);
 		}
 		System.out.println("System states created for "+ nameOfResource);
 	}
@@ -743,10 +768,7 @@ public class DesignPatterns {
 		//		getCplex().addEq(statesIntArrayResource[0][resourceParameters.get(indexOfResource).getInitialSystemState()], 1);
 		//		getCplex().addEq(getCplex().sum(statesIntArrayResource[0]), 1);
 
-		for (int timestep = 1; timestep < getArrayLength(); timestep++) {
-
-			// only one active state per time step
-			//				cplex.addEq(cplex.sum(statesIntArrayElectrolyzer1[i]), 1);
+		for (int timestep = 1; timestep < getArrayLength()+1; timestep++) {
 
 			for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
 				// min duration
@@ -767,7 +789,13 @@ public class DesignPatterns {
 							// TODO: handle exception
 						} 
 					}
-					getCplex().addLe(getCplex().prod(constraintLeftSide, Math.min(counter, resourceParameters.get(indexOfResource).getSystemStates().get(state).getMinStateDuration())), constraintRightSide);
+					getCplex().addLe(getCplex().prod(
+							constraintLeftSide, 
+							Math.min(counter, 
+									resourceParameters.get(indexOfResource).getSystemStates().get(state).getMinStateDuration()
+									)
+							), 
+							constraintRightSide);
 				}
 				//max Duration
 				if (resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxStateDuration() == NOLIMIT) {
@@ -871,14 +899,14 @@ public class DesignPatterns {
 				IloNumExpr powerInputSum = getCplex().numExpr();
 				for (int outputI = 0; outputI < powerOutputs.length; outputI++) {
 					powerOutputSum = getCplex().sum(powerOutputSum, powerOutputs[outputI][timeStep]);
-					System.out.println("output" + timeStep + " " + outputI + " added");
+					//					System.out.println("output" + timeStep + " " + outputI + " added");
 				}
 				for (int inputI = 0; inputI < powerInputs.length; inputI++) {
 					powerInputSum = getCplex().sum(powerInputSum, powerInputs[inputI][timeStep]);			
-					System.out.println("input" + timeStep + " " + inputI + " added");
+					//					System.out.println("input" + timeStep + " " + inputI + " added");
 				}
 				getCplex().addEq(powerOutputSum, powerInputSum);
-				System.out.println(timeStep + "corr dep added");
+				//				System.out.println(timeStep + "corr dep added");
 			}
 		} else {
 			System.err.println("Input or Output empty");
