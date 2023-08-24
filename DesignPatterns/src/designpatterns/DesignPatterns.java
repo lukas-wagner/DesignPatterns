@@ -220,7 +220,7 @@ public class DesignPatterns {
 					resourceParameters.get(indexOfResource).getMaxPowerOutput()
 					);
 			getDecisionVariablesVector().put(nameOfResource+"-"+OUTPUT+"-"+POWER, powerOutputResource);
-				//		System.out.println("Output variable "+ nameOfResource);
+			//		System.out.println("Output variable "+ nameOfResource);
 
 			if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()!=0) {
 				// only create decision variable, if necessary
@@ -605,17 +605,17 @@ public class DesignPatterns {
 				for (int plasegment = 0; plasegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plasegment++) {
 					getCplex().add(
 							getCplex().ifThen(
-//									getCplex().and(
-//											getCplex().le(binariesPlaResource[plasegment][timestep], 1),
-//											getCplex().ge(binariesPlaResource[plasegment][timestep], 0.9)
-//											),
+									//									getCplex().and(
+									//											getCplex().le(binariesPlaResource[plasegment][timestep], 1),
+									//											getCplex().ge(binariesPlaResource[plasegment][timestep], 0.9)
+									//											),
 									getCplex().eq(binariesPlaResource[plasegment][timestep], 1),
 									getCplex().eq(powerOutputResource[timestep],
 											getCplex().sum(
 													resourceParameters.get(indexOfResource).getPla().get(plasegment).getIntercept(),
 													getCplex().prod(
 															powerInputSum,
-//															powerInputResourceLinearSegments[plasegment][timestep],
+															//															powerInputResourceLinearSegments[plasegment][timestep],
 															resourceParameters.get(indexOfResource).getPla().get(plasegment).getSlope()
 															)
 													)
@@ -760,14 +760,6 @@ public class DesignPatterns {
 		if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
 		IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, STATE);
 
-		// --------------------- State sequences and holding duration ----------------------------------
-
-		// initial state	
-
-		//		// set initial system state, all other states = 0 
-		//		getCplex().addEq(statesIntArrayResource[0][resourceParameters.get(indexOfResource).getInitialSystemState()], 1);
-		//		getCplex().addEq(getCplex().sum(statesIntArrayResource[0]), 1);
-
 		for (int timestep = 1; timestep < getArrayLength()+1; timestep++) {
 
 			for (int state = 0; state < resourceParameters.get(indexOfResource).getNumberOfSystemStates(); state++) {
@@ -816,6 +808,8 @@ public class DesignPatterns {
 					}
 					getCplex().addLe(constraintLeftSide, Math.min(counter,resourceParameters.get(indexOfResource).getSystemStates().get(state).getMaxStateDuration()));
 				}
+
+
 				//State sequences
 				IloNumExpr constraintLeftSide = getCplex().diff(statesIntArrayResource[timestep-1][state],statesIntArrayResource[timestep][state]);
 				IloNumExpr constraintRightSide = statesIntArrayResource[timestep][resourceParameters.get(indexOfResource).getSystemStates().get(state).getFollowerStates()[0]];
@@ -878,6 +872,12 @@ public class DesignPatterns {
 						);
 			}
 		}
+		if (resourceParameters.get(indexOfResource).getCapacityTarget()!=-1) {
+			if(resourceParameters.get(indexOfResource).getCapacityTargetComparator()=="Eq") 	getCplex().addEq(stateOfCharge[getArrayLength()], resourceParameters.get(indexOfResource).getCapacityTarget());
+			if(resourceParameters.get(indexOfResource).getCapacityTargetComparator()=="Ge") 	getCplex().addGe(stateOfCharge[getArrayLength()], resourceParameters.get(indexOfResource).getCapacityTarget());
+			if(resourceParameters.get(indexOfResource).getCapacityTargetComparator()=="Le") 	getCplex().addLe(stateOfCharge[getArrayLength()], resourceParameters.get(indexOfResource).getCapacityTarget());
+		}
+		
 		System.out.println("Energy balance created for "+ nameOfResource);
 	}
 

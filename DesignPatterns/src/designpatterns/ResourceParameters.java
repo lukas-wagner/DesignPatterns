@@ -73,7 +73,13 @@ public class ResourceParameters {
 
 	/** The inital capacity. */
 	double initalCapacity; 
+	
+	/** The capacity target. */
+	double capacityTarget = -1; 
 
+	/** The capacity target comparator. */
+	String capacityTargetComparator = "Eq";
+	
 	/** The static power loss. */
 	double staticEnergyLoss;
 	
@@ -841,6 +847,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the initial system state.
+	 *
 	 * @return the initialSystemState
 	 */
 	public int getInitialSystemState() {
@@ -849,10 +857,48 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the initial system state.
+	 *
 	 * @param initialSystemState the initialSystemState to set
 	 */
 	public void setInitialSystemState(int initialSystemState) {
 		this.initialSystemState = initialSystemState;
+	}
+
+
+	/**
+	 * @return the capacityTarget
+	 */
+	public double getCapacityTarget() {
+		return capacityTarget;
+	}
+
+
+	/**
+	 * Sets the capacity target at last time step.
+	 *
+	 * @param capacityTarget the capacityTarget to set
+	 */
+	public void setCapacityTarget(double capacityTarget) {
+		this.capacityTarget = capacityTarget;
+	}
+
+
+	/**
+	 * @return the capacityTargetComparator
+	 */
+	public String getCapacityTargetComparator() {
+		return capacityTargetComparator;
+	}
+
+
+	/**
+	 * Sets the capacity target comparator (Eq =, Ge =>, Le <=).
+	 *
+	 * @param capacityTargetComparator the capacityTargetComparator to set
+	 */
+	public void setCapacityTargetComparator(String capacityTargetComparator) {
+		this.capacityTargetComparator = capacityTargetComparator;
 	} 
 
 }

@@ -35,8 +35,8 @@ public class ElectrolyzerOptimization {
 
 	public static void main(String[] args) throws IloException {
 		setOptimizationParameters();
-//		electrolyzerBaseModel();
-		electrolyzerModelI();
+		electrolyzerBaseModel();
+//		electrolyzerModelI();
 //		electrolyzerModelII();
 	}
 
@@ -45,7 +45,7 @@ public class ElectrolyzerOptimization {
 	 */
 	public static void setOptimizationParameters () {
 
-		designpatterns.DesignPatterns.setOptimalityGap(0.01); // default 10e-4
+		designpatterns.DesignPatterns.setOptimalityGap(0.001); // default 10e-4
 		designpatterns.DesignPatterns.setTimeInterval(0.25); // 0.05 = 3Minutes, 0.125 = 7.5 Minutes
 		designpatterns.DesignPatterns.setArrayLength(10); // set arrayLength in # of time steps
 
@@ -70,7 +70,8 @@ public class ElectrolyzerOptimization {
 
 		resource1.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
 		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
-		resource1.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7, maxPowerEl);
+//		resource1.addSystemStateWithRamp(2, "operation", 4, NOLIMIT, new int[] {3,4}, 7, maxPowerEl, 0, 45);
+		resource1.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl);
 		resource1.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 0.52,0.52, 0);
 		resource1.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
 		resource1.setNumberOfSystemStates(resource1.getSystemStates().size());
@@ -96,7 +97,7 @@ public class ElectrolyzerOptimization {
 
 		resource2.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
 		resource2.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
-		resource2.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7, maxPowerEl);
+		resource2.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl);
 		resource2.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 0.52,0.52, 0);
 		resource2.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
 		resource2.setNumberOfSystemStates(resource2.getSystemStates().size());
@@ -113,8 +114,10 @@ public class ElectrolyzerOptimization {
 		resource3.setResourceAsStorage(true);
 		resource3.setEfficiencyInputStorage(1);
 		resource3.setEfficiencyOutputStorage(1);
-		resource3.setInitalCapacity(0);
-		resource3.setMaximumStorageCapacity(2000);
+		resource3.setInitalCapacity(2000);
+		resource3.setCapacityTarget(2000);
+		resource3.setCapacityTargetComparator("Ge");
+		resource3.setMaximumStorageCapacity(4000);
 		//		resource3.setStaticEnergyLoss(0);
 		//		resource3.setDynamicEnergyLoss(0);
 		//		resource3.setReferenceDynamicEnergyLoss(resource3.maximumStorageCapacity);
