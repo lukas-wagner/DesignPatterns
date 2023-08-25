@@ -70,6 +70,9 @@ public class ResourceParameters {
 
 	/** The minimum storage capacity. */
 	double minimumStorageCapacity; 
+	
+	/** The unit conversion factor storage. */
+	double unitConversionFactorStorage = 1; 
 
 	/** The inital capacity. */
 	double initalCapacity; 
@@ -899,6 +902,22 @@ public class ResourceParameters {
 	 */
 	public void setCapacityTargetComparator(String capacityTargetComparator) {
 		this.capacityTargetComparator = capacityTargetComparator;
+	}
+
+
+	/**
+	 * @return the unitConversionFactorStorage
+	 */
+	public double getUnitConversionFactorStorage() {
+		return unitConversionFactorStorage;
+	}
+
+
+	/**
+	 * @param unitConversionFactorStorage the unitConversionFactorStorage to set
+	 */
+	public void setUnitConversionFactorStorage(double unitConversionFactorStorage) {
+		this.unitConversionFactorStorage = unitConversionFactorStorage;
 	} 
 
 }

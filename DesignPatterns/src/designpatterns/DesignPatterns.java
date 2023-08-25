@@ -270,8 +270,8 @@ public class DesignPatterns {
 			if (resourceParameters.get(indexOfStorage).isStorage()==true) {
 				IloNumVar[] powerInputStorage = getCplex().numVarArray(
 						getArrayLength(), 
-						resourceParameters.get(indexOfStorage).getMinPowerOutput(), 
-						resourceParameters.get(indexOfStorage).getMaxPowerOutput()
+						resourceParameters.get(indexOfStorage).getMinPowerInput(), 
+						resourceParameters.get(indexOfStorage).getMaxPowerInput()
 						);
 				getDecisionVariablesVector().put(nameOfStorage+"-"+INPUT+"-"+POWER, powerInputStorage);
 				//				System.out.println("power input variable "+ nameOfStorage);
@@ -299,7 +299,7 @@ public class DesignPatterns {
 						}
 					}
 					getDecisionVariablesMatrix().put(nameOfStorage+"-"+POWER+"-"+STATE, statesIntArrayResource);
-					//				System.out.println("state variable "+ nameOfResource);
+					//				System.out.println("state variable "+ nameOfStorage);
 				}
 
 			}
@@ -913,18 +913,20 @@ public class DesignPatterns {
 				getCplex().addEq(stateOfCharge[timestep], 
 						getCplex().sum(
 								stateOfCharge[timestep-1],
-								getCplex().diff(
-										getCplex().prod(powerInputStorage[timestep-1], resourceParameters.get(indexOfResource).getEfficiencyInputStorage()*getTimeInterval()),
-										getCplex().sum(
+								getCplex().prod(resourceParameters.get(indexOfResource).getUnitConversionFactorStorage(),
+										getCplex().diff(
+												getCplex().prod(powerInputStorage[timestep-1], resourceParameters.get(indexOfResource).getEfficiencyInputStorage()*getTimeInterval()),
 												getCplex().sum(
-														getCplex().prod(powerOutputStorage[timestep-1], resourceParameters.get(indexOfResource).getEfficiencyOutputReciprocal()*getTimeInterval()),
-														resourceParameters.get(indexOfResource).getStaticEnergyLoss()*getTimeInterval()
-														), 
-												getCplex().prod(
-														resourceParameters.get(indexOfResource).getDynamicEnergyLoss()*getTimeInterval(), 
-														getCplex().diff(
-																resourceParameters.get(indexOfResource).getReferenceDynamicEnergyLoss(),
-																stateOfCharge[timestep]
+														getCplex().sum(
+																getCplex().prod(powerOutputStorage[timestep-1], resourceParameters.get(indexOfResource).getEfficiencyOutputReciprocal()*getTimeInterval()),
+																resourceParameters.get(indexOfResource).getStaticEnergyLoss()*getTimeInterval()
+																), 
+														getCplex().prod(
+																resourceParameters.get(indexOfResource).getDynamicEnergyLoss()*getTimeInterval(), 
+																getCplex().diff(
+																		resourceParameters.get(indexOfResource).getReferenceDynamicEnergyLoss(),
+																		stateOfCharge[timestep]
+																		)
 																)
 														)
 												)
