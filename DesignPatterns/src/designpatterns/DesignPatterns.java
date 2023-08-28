@@ -922,8 +922,8 @@ public class DesignPatterns {
 																resourceParameters.get(indexOfResource).getStaticEnergyLoss()*getTimeInterval()
 																), 
 														getCplex().prod(
-																resourceParameters.get(indexOfResource).getDynamicEnergyLoss()*getTimeInterval(), 
-																getCplex().diff(
+																0.5*resourceParameters.get(indexOfResource).getDynamicEnergyLoss()*getTimeInterval(), 
+																getCplex().sum(
 																		resourceParameters.get(indexOfResource).getReferenceDynamicEnergyLoss(),
 																		stateOfCharge[timestep]
 																		)

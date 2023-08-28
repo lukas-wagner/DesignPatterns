@@ -914,6 +914,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Sets the unit conversion factor storage f -> SOC[i] = SOC[i-1] + f(P_in*eta*t-Pout/eta*t-Ploss).
+	 *
 	 * @param unitConversionFactorStorage the unitConversionFactorStorage to set
 	 */
 	public void setUnitConversionFactorStorage(double unitConversionFactorStorage) {
