@@ -76,9 +76,9 @@ public class ElectrolyzerOptimization2 {
 		input1.add(DesignPatterns.setPla(118.41,15.306, 38.15582, maxPowerEl));
 		
 		resource1.getPlaList().add(input1);
+		resource1.setNumberOfLinearSegments(resource1.getPlaList().get(0).size());
 		
 		resource1.setNumberOfInputs(resource1.getPlaList().size());
-
 		resource1.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
 		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
 		resource1.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl);
@@ -90,6 +90,30 @@ public class ElectrolyzerOptimization2 {
 		// add object to Array List
 		DesignPatterns.getResourceParameters().add(resource1);
 
+		ResourceParameters resource2 = new  ResourceParameters();
+		resource2.setName("Electrolyzer2");
+		//		resource2.setEnergyCarrier(POWER);
+		resource2.setEnergyCarrierInputs(Arrays.asList(POWER));
+		//		resource2.setMinPowerInput(0);
+		resource2.setMinPowerInputs(Arrays.asList(0.0));
+		resource2.setMaxPowerInputs(Arrays.asList(maxPowerEl));
+		resource2.setMinPowerOutput(0);
+//		resource2.setMaxPowerInput(maxPowerEl);
+		resource2.setMaxPowerOutput(1000);
+		
+		resource2.getPlaList().add(input1);
+		resource2.setNumberOfLinearSegments(resource2.getPlaList().get(0).size());
+		
+		resource2.setNumberOfInputs(resource2.getPlaList().size());
+		resource2.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
+		resource2.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
+		resource2.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl);
+		resource2.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 0.52,0.52, 0);
+		resource2.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
+		resource2.setNumberOfSystemStates(resource2.getSystemStates().size());
+		resource2.setInitialSystemState(2);
+		DesignPatterns.getResourceParameters().add(resource2);
+		
 		ResourceParameters resource3 = new  ResourceParameters();
 		resource3.setName("Storage");
 		resource3.setEnergyCarrier(POWER);
@@ -134,13 +158,15 @@ public class ElectrolyzerOptimization2 {
 			designpatterns.DesignPatterns.generateCorrelativeDependency(
 					new IloNumVar[][] {designpatterns.DesignPatterns.getDecisionVariableFromVector("System", INPUT, POWER)}, 
 					new IloNumVar[][] {
-						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", "Input0", POWER)
+						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", INPUT, POWER), 
+						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", INPUT, POWER), 
 					}
 					);
 
 			designpatterns.DesignPatterns.generateCorrelativeDependency(
 					new IloNumVar[][] {
 						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", OUTPUT, POWER), 
+						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", OUTPUT, POWER), 
 					}, 
 					new IloNumVar[][] {
 						designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", INPUT, POWER)
@@ -153,6 +179,7 @@ public class ElectrolyzerOptimization2 {
 					);
 
 			designpatterns.DesignPatterns.generateInputOutputRelationship("Electrolyzer1");
+			designpatterns.DesignPatterns.generateInputOutputRelationship("Electrolyzer2");
 
 			designpatterns.DesignPatterns.generateEnergyBalanceForStorageSystem("Storage");
 

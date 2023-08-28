@@ -66,18 +66,14 @@ public class ResourceParameters {
 	/**  Efficiencies/IO Relation. */
 	double efficiency; 
 	
-	List<Double> efficiencyInputs = new ArrayList<Double>();
-
 	/** The intercept. */
 	double slope, intercept; 
-	
 
 	/** The pla. */
 	List<PiecewiseLinearApproximation> pla = new ArrayList<PiecewiseLinearApproximation>();
 	
 	/** The pla list for all inputs. */
 	List<List<PiecewiseLinearApproximation>> plaList = new ArrayList<List<PiecewiseLinearApproximation>>();
-	
 	
 	/** The number of linear segments. */
 	int numberOfLinearSegments; 
@@ -1045,19 +1041,4 @@ public class ResourceParameters {
 	public void setMaxPowerInputs(List<Double> maxPowerInputs) {
 		this.maxPowerInputs = maxPowerInputs;
 	}
-
-	/**
-	 * @return the efficiencyInputs
-	 */
-	public List<Double> getEfficiencyInputs() {
-		return efficiencyInputs;
-	}
-
-	/**
-	 * @param efficiencyInputs the efficiencyInputs to set
-	 */
-	public void setEfficiencyInputs(List<Double> efficiencyInputs) {
-		this.efficiencyInputs = efficiencyInputs;
-	} 
-
 }
