@@ -3,6 +3,7 @@ package designpatterns;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -167,8 +168,45 @@ public class DesignPatterns {
 		resourceParameters.add(resource3);
 	}
 
+	/**
+	 * Sets the pla per input.
+	 *
+	 * @param interceptpla the interceptpla
+	 * @param slopepla the slopepla
+	 * @param lowerboundpla the lowerboundpla
+	 * @param upperboundpla the upperboundpla
+	 * @return the piecewise linear approximation
+	 */
+	public static PiecewiseLinearApproximation setPla (double interceptpla, double slopepla, double lowerboundpla, double upperboundpla) {
+		PiecewiseLinearApproximation segY = new PiecewiseLinearApproximation(); 
+		segY.setPla(interceptpla, slopepla, lowerboundpla, upperboundpla);
+		return segY;
+	}
 
+	/**
+	 * Sets the linear relationship per input.
+	 *
+	 * @param intercept the intercept
+	 * @param slope the slope
+	 * @return the piecewise linear approximation
+	 */
+	public static PiecewiseLinearApproximation setLinearRelationship (double intercept, double slope) {
+		PiecewiseLinearApproximation segY = new PiecewiseLinearApproximation(); 
+		segY.setLinearRelationship(intercept, slope);
+		return segY;
+	}
 
+	/**
+	 * Sets the efficiency per input.
+	 *
+	 * @param efficiency the efficiency
+	 * @return the piecewise linear approximation
+	 */
+	public static PiecewiseLinearApproximation setEfficiency (double efficiency) {
+		PiecewiseLinearApproximation segY = new PiecewiseLinearApproximation(); 
+		segY.setEfficiency(efficiency);
+		return segY;
+	}
 	/**
 	 * Creation of decision variables from ResourceParameters.
 	 * saves created decision variables to 2 hashmaps, depending on #2 of colums (1 -> vector, 2-> matrix)
@@ -205,14 +243,22 @@ public class DesignPatterns {
 			int indexOfResource = -1;
 			indexOfResource = findIndexByName(nameOfResource);
 			if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
+			if (getResourceParameters().get(indexOfResource).getNumberOfInputs()==1) {
+				getResourceParameters().get(indexOfResource).setMinPowerInputs(Arrays.asList(getResourceParameters().get(indexOfResource).getMinPowerInput()));
+				getResourceParameters().get(indexOfResource).setMaxPowerInputs(Arrays.asList(getResourceParameters().get(indexOfResource).getMaxPowerInput()));
+			}
+			for (int numberOfInput = 0; numberOfInput < getResourceParameters().get(indexOfResource).getNumberOfInputs(); numberOfInput++) {
+				//create more than one decVar if numInput>1;
+				//System.out.println("numberOfInputs " + getResourceParameters().get(indexOfResource).getNumberOfInputs());
+				IloNumVar[] powerInputResource = getCplex().numVarArray(
+						getArrayLength(), 
+						resourceParameters.get(indexOfResource).getMinPowerInputs().get(numberOfInput), // specific power input var 
+						resourceParameters.get(indexOfResource).getMaxPowerInputs().get(numberOfInput)
+						);
+				getDecisionVariablesVector().put(nameOfResource+"-"+INPUT+numberOfInput+"-"+POWER, powerInputResource);
+				System.out.println("Input variable " +numberOfInput + nameOfResource);
+			}
 
-			IloNumVar[] powerInputResource = getCplex().numVarArray(
-					getArrayLength(), 
-					resourceParameters.get(indexOfResource).getMinPowerInput(), 
-					resourceParameters.get(indexOfResource).getMaxPowerInput()
-					);
-			getDecisionVariablesVector().put(nameOfResource+"-"+INPUT+"-"+POWER, powerInputResource);
-			//			System.out.println("Input variable "+ nameOfResource);
 
 			IloNumVar[] powerOutputResource = getCplex().numVarArray(
 					getArrayLength(), 
@@ -222,27 +268,28 @@ public class DesignPatterns {
 			getDecisionVariablesVector().put(nameOfResource+"-"+OUTPUT+"-"+POWER, powerOutputResource);
 			//		System.out.println("Output variable "+ nameOfResource);
 
-			if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()!=0) {
-				// only create decision variable, if necessary
-				IloIntVar[][] binariesPlaResource = new IloIntVar[resourceParameters.get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
-				for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
-					binariesPlaResource[plaSegment] = getCplex().intVarArray(getArrayLength(), 0 , 1);
-				}
-				getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+BINARY, binariesPlaResource);
-				//				System.out.println("binary power variable "+ nameOfResource);
+			for (int numberOfInput = 0; numberOfInput < getResourceParameters().get(indexOfResource).getNumberOfInputs(); numberOfInput++) {
+				if (resourceParameters.get(indexOfResource).getPlaList().get(numberOfInput).size()!=0) {
+					// only create decision variable, if necessary
+					IloIntVar[][] binariesPlaResource = new IloIntVar[resourceParameters.get(indexOfResource).getPlaList().get(numberOfInput).size()][getArrayLength()]; 
+					for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getPlaList().get(numberOfInput).size(); plaSegment++) {
+						binariesPlaResource[plaSegment] = getCplex().intVarArray(getArrayLength(), 0 , 1);
+					}
+					getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+numberOfInput+"-"+BINARY, binariesPlaResource);
+					System.out.println("binary power variable "+ numberOfInput + nameOfResource);
 
-				IloNumVar[][] powerInputLinearSegmentsResource = new IloNumVar[resourceParameters.get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
-				for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
-					powerInputLinearSegmentsResource[plaSegment] = getCplex().numVarArray(
-							getArrayLength(),
-							resourceParameters.get(indexOfResource).getMinPowerInput(), 
-							resourceParameters.get(indexOfResource).getMaxPowerInput()
-							);
+					IloNumVar[][] powerInputLinearSegmentsResource = new IloNumVar[resourceParameters.get(indexOfResource).getPlaList().get(numberOfInput).size()][getArrayLength()]; 
+					for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getPlaList().get(numberOfInput).size(); plaSegment++) {
+						powerInputLinearSegmentsResource[plaSegment] = getCplex().numVarArray(
+								getArrayLength(),
+								resourceParameters.get(indexOfResource).getMinPowerInputs().get(numberOfInput), 
+								resourceParameters.get(indexOfResource).getMinPowerInputs().get(numberOfInput)
+								);
+					}
+					getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+numberOfInput+"-"+SEGMENT, powerInputLinearSegmentsResource);
+					System.out.println("power segment variable "+ numberOfInput + nameOfResource);
 				}
-				getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+SEGMENT, powerInputLinearSegmentsResource);
-				//				System.out.println("power segment variable "+ nameOfResource);
 			}
-
 			if (resourceParameters.get(indexOfResource).getNumberOfSystemStates()!=0) {
 				// only create decision variable, if necessary
 				IloIntVar[][] statesIntArrayResource = new IloIntVar[getArrayLength()+1][resourceParameters.get(indexOfResource).getNumberOfSystemStates()];
@@ -547,10 +594,9 @@ public class DesignPatterns {
 
 
 		// get decision variables from vector/matrix
-		IloNumVar[] powerInputResource = getDecisionVariableFromVector(nameOfResource, INPUT, POWER);
+		//		IloNumVar[] powerInputResource = getDecisionVariableFromVector(nameOfResource, "Input0", POWER);
 		IloNumVar[] powerOutputResource = getDecisionVariableFromVector(nameOfResource, OUTPUT, POWER);
-		IloIntVar[][] binariesPlaResource  = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, BINARY);
-		IloNumVar[][] powerInputResourceLinearSegments = getDecisionVariableFromMatrix(nameOfResource, POWER, SEGMENT);
+
 
 		if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()==0
 				&& resourceParameters.get(indexOfResource).getEfficiency()!=0
@@ -558,9 +604,18 @@ public class DesignPatterns {
 			// Case 1: efficiency
 			System.out.println("Input-Output Relationship by Efficiency for "+ nameOfResource);
 			for (int timestep = 0; timestep < getArrayLength(); timestep++) {
-				getCplex().addEq(powerOutputResource[timestep], 
-						getCplex().prod(powerInputResource[timestep], resourceParameters.get(indexOfResource).getEfficiency())
-						);
+				IloNumExpr sumPowerInput = getCplex().numExpr();
+				for (int numberOfInput = 0; numberOfInput < getResourceParameters().get(indexOfResource).getNumberOfInputs(); numberOfInput++) {
+					sumPowerInput = 	getCplex().sum(
+							sumPowerInput, 
+							getCplex().prod(
+									getDecisionVariableFromVector(nameOfResource, "Input"+Integer.toString(numberOfInput), POWER)[timestep], 
+									resourceParameters.get(indexOfResource).getPlaList().get(0).get(0).getSlope()
+									)
+							);
+					System.out.println(nameOfResource+ " Input" + numberOfInput+ " considered.");
+				}
+				getCplex().addEq(powerOutputResource[timestep], sumPowerInput);
 			} 
 		} else if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()==0
 				&& resourceParameters.get(indexOfResource).getEfficiency()==0
@@ -568,73 +623,92 @@ public class DesignPatterns {
 			// y = ax+b
 			System.out.println("Input-Output Relationship y = ax+b for "+ nameOfResource);
 			for (int timestep = 0; timestep < getArrayLength(); timestep++) {
-				getCplex().addEq(powerOutputResource[timestep], 
-						getCplex().sum(
-								resourceParameters.get(indexOfResource).getIntercept(),
-								getCplex().prod(powerInputResource[timestep], resourceParameters.get(indexOfResource).getSlope())
-								)
-						);
-			}
-		} else if (resourceParameters.get(indexOfResource).getNumberOfLinearSegments()>0) {
-			// Case 3: pla
-			System.out.println("Input-Output Relationship piecewise linear approximation for "+ nameOfResource);
-			for (int timestep = 0; timestep < getArrayLength(); timestep++) {
-				// sum binaries[i] = 1 part 1
-				IloNumExpr binarySum = getCplex().numExpr();
-				IloNumExpr powerInputSum = getCplex().numExpr();
 
-				for (int plaSegment = 0; plaSegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
-
-					// lowerBound * power <= binary
-					getCplex().addLe(
-							getCplex().prod(
-									resourceParameters.get(indexOfResource).getPla().get(plaSegment).getLowerBound(), 
-									binariesPlaResource[plaSegment][timestep]
-									), 
-							powerInputResourceLinearSegments[plaSegment][timestep]
-							);
-
-					//power <= upperBound * binary
-					getCplex().addLe(
-							powerInputResourceLinearSegments[plaSegment][timestep], 
-							getCplex().prod(
-									resourceParameters.get(indexOfResource).getPla().get(plaSegment).getUpperBound(), 
-									binariesPlaResource[plaSegment][timestep]
-									)
-							);
-
-					// sum binaries[i] = 1 part 2
-					binarySum = getCplex().sum(binarySum,binariesPlaResource[plaSegment][timestep]);
-					powerInputSum = getCplex().sum(powerInputSum, powerInputResourceLinearSegments[plaSegment][timestep]);
-				}
-
-				// sum binaries[i] = 1 part 3           
-				getCplex().addEq(binarySum, 1);
-
-				// sum powerInputElectrolyzer1LinearSegments[i] = powerOutputElectrolyzer1[i] part 3
-				getCplex().addEq(powerInputSum, powerInputResource[timestep]);
-
-				for (int plasegment = 0; plasegment < resourceParameters.get(indexOfResource).getNumberOfLinearSegments(); plasegment++) {
-					getCplex().add(
-							getCplex().ifThen(
-									//									getCplex().and(
-									//											getCplex().le(binariesPlaResource[plasegment][timestep], 1),
-									//											getCplex().ge(binariesPlaResource[plasegment][timestep], 0.9)
-									//											),
-									getCplex().eq(binariesPlaResource[plasegment][timestep], 1),
-									getCplex().eq(powerOutputResource[timestep],
-											getCplex().sum(
-													resourceParameters.get(indexOfResource).getPla().get(plasegment).getIntercept(),
-													getCplex().prod(
-															powerInputSum,
-															//															powerInputResourceLinearSegments[plasegment][timestep],
-															resourceParameters.get(indexOfResource).getPla().get(plasegment).getSlope()
-															)
-													)
+				IloNumExpr sumPowerInput = getCplex().numExpr();
+				for (int numberOfInput = 0; numberOfInput < getResourceParameters().get(indexOfResource).getNumberOfInputs(); numberOfInput++) {
+					sumPowerInput = getCplex().sum(
+							sumPowerInput, 
+							getCplex().sum(
+									resourceParameters.get(indexOfResource).getPlaList().get(numberOfInput).get(0).getIntercept(),
+									getCplex().prod(
+											getDecisionVariableFromVector(nameOfResource, "Input"+Integer.toString(numberOfInput), POWER)[timestep], 
+											resourceParameters.get(indexOfResource).getPlaList().get(numberOfInput).get(0).getSlope()
 											)
 									)
 							);
+					System.out.println(nameOfResource+ " Input" + numberOfInput+ " considered.");
 				}
+				getCplex().addEq(powerOutputResource[timestep], sumPowerInput);
+			}
+		} else if (getResourceParameters().get(indexOfResource).getPlaList().size()>0) {
+			System.out.println("Input-Output Relationship piecewise linear approximation for "+ nameOfResource);
+
+
+			//			IloIntVar[][] binariesPlaResource  = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, "Power0", BINARY);
+			//			IloNumVar[][] powerInputResourceLinearSegments = getDecisionVariableFromMatrix(nameOfResource, "Power0", SEGMENT);
+
+			// Case 3: pla
+			for (int timestep = 0; timestep < getArrayLength(); timestep++) {
+				IloNumExpr allPowerInputSum = getCplex().numExpr();
+
+				for (int numberOfInput = 0; numberOfInput < getResourceParameters().get(indexOfResource).getPlaList().size(); numberOfInput++) {
+					IloNumExpr powerInputSum = getCplex().numExpr();
+					IloNumExpr binarySum = getCplex().numExpr();
+					// sum binaries[i] = 1 part 1
+
+					for (int plaSegment = 0; plaSegment < getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).size(); plaSegment++) {
+
+						// lowerBound * power <= binary
+						getCplex().addLe(
+								getCplex().prod(
+										getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).get(plaSegment).getLowerBound(), 
+										(IloIntVar) getDecisionVariableFromMatrix(nameOfResource, "Power"+Integer.toString(numberOfInput), BINARY)[plaSegment][timestep]
+										), 
+								getDecisionVariableFromMatrix(nameOfResource, "Power"+Integer.toString(numberOfInput), SEGMENT)[plaSegment][timestep]
+								);
+
+						//power <= upperBound * binary
+						getCplex().addLe(
+								getDecisionVariableFromMatrix(nameOfResource, "Power"+Integer.toString(numberOfInput), SEGMENT)[plaSegment][timestep], 
+								getCplex().prod(
+										getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).get(plaSegment).getUpperBound(), 
+										(IloIntVar) getDecisionVariableFromMatrix(nameOfResource, "Power"+Integer.toString(numberOfInput), BINARY)[plaSegment][timestep]
+										)
+								);
+
+						// sum binaries[i] = 1 part 2
+						binarySum = getCplex().sum(binarySum,(IloIntVar) getDecisionVariableFromMatrix(nameOfResource, "Power"+Integer.toString(numberOfInput), BINARY)[plaSegment][timestep]);
+						powerInputSum = getCplex().sum(powerInputSum, getDecisionVariableFromMatrix(nameOfResource, "Power"+Integer.toString(numberOfInput), SEGMENT)[plaSegment][timestep]);
+					}
+
+					// sum binaries[i] = 1 part 3           
+					getCplex().addEq(binarySum, 1);
+					// sum powerInputElectrolyzer1LinearSegments[i] = powerOutputElectrolyzer1[i] part 3
+					getCplex().addEq(powerInputSum, getDecisionVariableFromVector(nameOfResource, "Input"+Integer.toString(numberOfInput), POWER)[timestep]);
+
+					//					allPowerInputSum = getCplex().addEq(allPowerInputSum, 1);
+
+					for (int plasegment = 0; plasegment <  getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).size(); plasegment++) {
+						getCplex().add(
+								getCplex().ifThen(
+										getCplex().eq((IloIntVar) getDecisionVariableFromMatrix(nameOfResource, "Power"+Integer.toString(numberOfInput), BINARY)[plasegment][timestep], 1),
+										getCplex().eq(allPowerInputSum,
+												getCplex().sum(allPowerInputSum,
+														getCplex().sum(getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).get(plasegment).getIntercept(),
+																getCplex().prod(
+																		powerInputSum,
+																		//powerInputResourceLinearSegments[plasegment][timestep],
+																		getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).get(plasegment).getSlope()
+																		)
+																)
+														)
+												)
+										)
+								);
+					}
+					System.out.println("t "+timestep + " " +nameOfResource+ " Input" + numberOfInput+ " considered.");
+				}
+				getCplex().addEq(powerOutputResource[timestep], allPowerInputSum);
 			}
 		}
 		System.out.println("Input-output successfully created for resource " + nameOfResource);
@@ -656,7 +730,8 @@ public class DesignPatterns {
 		if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
 
 		if (resourceParameters.get(indexOfResource).isStorage()==false) {
-			IloNumVar[] powerInputResource = getDecisionVariableFromVector(nameOfResource, INPUT, POWER);
+			// TODO dynamisch anpassen
+			IloNumVar[] powerInputResource = getDecisionVariableFromVector(nameOfResource, "Input0", POWER);
 			IloNumVar[] powerOutputResource  = getDecisionVariableFromVector(nameOfResource, OUTPUT, POWER);
 			IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, STATE);
 
@@ -705,7 +780,7 @@ public class DesignPatterns {
 
 			IloNumVar[] powerOutputResource  = getDecisionVariableFromVector(nameOfResource, OUTPUT, POWER);
 			IloNumVar[] stateOfChargeResource  = getDecisionVariableFromVector(nameOfResource, SOC, POWER);
-			IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, STATE);
+			IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, "Power0", STATE);
 
 			//set initial system state, all other states = 0 
 			getCplex().addEq(statesIntArrayResource[0][resourceParameters.get(indexOfResource).getInitialSystemState()], 1);
@@ -764,9 +839,10 @@ public class DesignPatterns {
 		indexOfResource = findIndexByName(nameOfResource);
 		if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
 
+		// TODO dynamisch anpassen
 
-		IloNumVar[] relevantPowerFlowResource = getDecisionVariableFromVector(nameOfResource, port, POWER); 
-		IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, STATE);
+		IloNumVar[] relevantPowerFlowResource = getDecisionVariableFromVector(nameOfResource, port, "Power0"); 
+		IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, "Power0", STATE);
 
 		if (port == INPUT) {
 			// --------------------- ramp limits ----------------------------------
@@ -819,6 +895,7 @@ public class DesignPatterns {
 		int indexOfResource = -1;
 		indexOfResource = findIndexByName(nameOfResource);
 		if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
+		// TODO Dynamisch anpassen
 		IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, STATE);
 
 		for (int timestep = 1; timestep < getArrayLength()+1; timestep++) {

@@ -1,6 +1,7 @@
 package designpatterns;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import ilog.concert.IloException;
@@ -9,7 +10,7 @@ import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
-public class ElectrolyzerOptimization {
+public class ElectrolyzerOptimization2 {
 	/** The nolimit. */
 	static final double NOLIMIT = 9999;
 
@@ -50,7 +51,7 @@ public class ElectrolyzerOptimization {
 
 		designpatterns.DesignPatterns.setOptimalityGap(0.001); // default 10e-4
 		designpatterns.DesignPatterns.setTimeInterval(0.25); // 0.05 = 3Minutes, 0.125 = 7.5 Minutes
-		designpatterns.DesignPatterns.setArrayLength(10); // set arrayLength in # of time steps
+		designpatterns.DesignPatterns.setArrayLength(2); // set arrayLength in # of time steps
 
 		double maxPowerEl = 52.25; // MW
 
@@ -58,10 +59,13 @@ public class ElectrolyzerOptimization {
 		// new object for resource to set parameters
 		ResourceParameters resource1 = new  ResourceParameters();
 		resource1.setName("Electrolyzer1");
-		resource1.setEnergyCarrier(POWER);
-		resource1.setMinPowerInput(0);
+		//		resource1.setEnergyCarrier(POWER);
+		resource1.setEnergyCarrierInputs(Arrays.asList(POWER));
+		//		resource1.setMinPowerInput(0);
+		resource1.setMinPowerInputs(Arrays.asList(0.0));
+		resource1.setMaxPowerInputs(Arrays.asList(maxPowerEl));
 		resource1.setMinPowerOutput(0);
-		resource1.setMaxPowerInput(maxPowerEl);
+//		resource1.setMaxPowerInput(maxPowerEl);
 		resource1.setMaxPowerOutput(1000);
 
 		List<PiecewiseLinearApproximation> input1 = new ArrayList<PiecewiseLinearApproximation>();
@@ -70,8 +74,11 @@ public class ElectrolyzerOptimization {
 		input1.add(DesignPatterns.setPla(24.303,18.342, 14.86643, 25.89245));
 		input1.add(DesignPatterns.setPla(70.154, 16.571,25.89245, 38.15582));
 		input1.add(DesignPatterns.setPla(118.41,15.306, 38.15582, maxPowerEl));
+		
 		resource1.getPlaList().add(input1);
 		
+		resource1.setNumberOfInputs(resource1.getPlaList().size());
+
 		resource1.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
 		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
 		resource1.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl);
@@ -81,33 +88,7 @@ public class ElectrolyzerOptimization {
 		resource1.setInitialSystemState(2);
 
 		// add object to Array List
-		designpatterns.DesignPatterns.getResourceParameters().add(resource1);
-
-		ResourceParameters resource2 = new ResourceParameters();
-		resource2.setName("Electrolyzer2");
-		resource2.setEnergyCarrier(POWER);
-		resource2.setMinPowerInput(0);
-		resource2.setMinPowerOutput(0);
-		resource2.setMaxPowerInput(maxPowerEl);
-		resource2.setMaxPowerOutput(1000);
-
-		List<PiecewiseLinearApproximation> inputR2 = new ArrayList<PiecewiseLinearApproximation>();
-		inputR2.add(DesignPatterns.setPla(0,0,0,7.84));
-		inputR2.add(DesignPatterns.setPla(-20.587,21.361, 7.84, 14.86643));
-		inputR2.add(DesignPatterns.setPla(24.303,18.342, 14.86643, 25.89245));
-		inputR2.add(DesignPatterns.setPla(70.154, 16.571,25.89245, 38.15582));
-		inputR2.add(DesignPatterns.setPla(118.41,15.306, 38.15582, maxPowerEl));
-		resource2.getPlaList().add(inputR2);
-
-		resource2.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
-		resource2.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
-		resource2.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl);
-		resource2.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 0.52,0.52, 0);
-		resource2.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
-		resource2.setNumberOfSystemStates(resource2.getSystemStates().size());
-		resource2.setInitialSystemState(2);
-
-		designpatterns.DesignPatterns.getResourceParameters().add(resource2);
+		DesignPatterns.getResourceParameters().add(resource1);
 
 		ResourceParameters resource3 = new  ResourceParameters();
 		resource3.setName("Storage");
@@ -125,7 +106,7 @@ public class ElectrolyzerOptimization {
 		//		resource3.setStaticEnergyLoss(0);
 		//		resource3.setDynamicEnergyLoss(0);
 		//		resource3.setReferenceDynamicEnergyLoss(resource3.maximumStorageCapacity);
-		designpatterns.DesignPatterns.getResourceParameters().add(resource3);
+		DesignPatterns.getResourceParameters().add(resource3);
 	}
 
 
@@ -153,15 +134,13 @@ public class ElectrolyzerOptimization {
 			designpatterns.DesignPatterns.generateCorrelativeDependency(
 					new IloNumVar[][] {designpatterns.DesignPatterns.getDecisionVariableFromVector("System", INPUT, POWER)}, 
 					new IloNumVar[][] {
-						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", "Input0", POWER), 
-						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", "Input0", POWER)
+						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", "Input0", POWER)
 					}
 					);
 
 			designpatterns.DesignPatterns.generateCorrelativeDependency(
 					new IloNumVar[][] {
 						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", OUTPUT, POWER), 
-						designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", OUTPUT, POWER)
 					}, 
 					new IloNumVar[][] {
 						designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", INPUT, POWER)
@@ -174,8 +153,6 @@ public class ElectrolyzerOptimization {
 					);
 
 			designpatterns.DesignPatterns.generateInputOutputRelationship("Electrolyzer1");
-
-			designpatterns.DesignPatterns.generateInputOutputRelationship("Electrolyzer2");
 
 			designpatterns.DesignPatterns.generateEnergyBalanceForStorageSystem("Storage");
 
@@ -211,12 +188,12 @@ public class ElectrolyzerOptimization {
 					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("System", INPUT, POWER)[i-1]);
 					counter++; 
 
-					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", "Input0", POWER)[i-1]);
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", INPUT, POWER)[i-1]);
 					counter++; 
 					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer1", OUTPUT, POWER)[i-1]);
 					counter++; 
 
-					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", "Input0", POWER)[i-1]);
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", INPUT, POWER)[i-1]);
 					counter++;
 					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Electrolyzer2", OUTPUT, POWER)[i-1]);
 					counter++; 
@@ -228,21 +205,21 @@ public class ElectrolyzerOptimization {
 					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", SOC, POWER)[i-1]);
 					counter++; 
 
-					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1","Power0",SEGMENT).length; j++) {
-						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1","Power0",SEGMENT)[j][i-1]);
+					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT).length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT)[j][i-1]);
 						counter++; 
 					}
-					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1","Power0",BINARY).length; j++) {
-						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1","Power0",BINARY)[j][i-1]);
+					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,BINARY).length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,BINARY)[j][i-1]);
 						counter++; 
 					}
 
-					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2","Power0",SEGMENT).length; j++) {
-						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2","Power0",SEGMENT)[j][i-1]);
+					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,SEGMENT).length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,SEGMENT)[j][i-1]);
 						counter++; 
 					}
-					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2","Power0",BINARY).length; j++) {
-						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2","Power0",BINARY)[j][i-1]);
+					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY).length; j++) {
+						optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY)[j][i-1]);
 						counter++; 
 					}
 

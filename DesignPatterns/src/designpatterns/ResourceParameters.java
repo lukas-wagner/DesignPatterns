@@ -12,20 +12,33 @@ public class ResourceParameters {
 	/** The name. */
 	String name; 
 
+	/** The number of inputs. */
+	int numberOfInputs = 1; 
+
 	/** The energy carrier input. */
 	String energyCarrierInput; 
 
+	/** The energy carrier inputs. */
+	List<String> energyCarrierInputs = new ArrayList<String>();
+	
 	/** The energy carrier output. */
 	String energyCarrierOutput; 
 
 	/** The relevant energy carrier. */
 	String relevantEnergyCarrier; 
+
 	/** The min/max power input. */
 	double minPowerInput; 
 
+	/** The list of min power input. */
+	List<Double> minPowerInputs = new ArrayList<Double>();
+	
 	/** The max power input. */
 	double maxPowerInput = Double.MAX_VALUE; 
 
+	/** The list of max power input. */
+	List<Double> maxPowerInputs = new ArrayList<Double>(); 
+	
 	/** The min/max power output. */
 	double minPowerOutput;
 
@@ -49,16 +62,23 @@ public class ResourceParameters {
 
 	/** The initial system state. */
 	int initialSystemState = 0; 
-	
+
 	/**  Efficiencies/IO Relation. */
 	double efficiency; 
+	
+	List<Double> efficiencyInputs = new ArrayList<Double>();
 
 	/** The intercept. */
 	double slope, intercept; 
+	
 
 	/** The pla. */
 	List<PiecewiseLinearApproximation> pla = new ArrayList<PiecewiseLinearApproximation>();
-
+	
+	/** The pla list for all inputs. */
+	List<List<PiecewiseLinearApproximation>> plaList = new ArrayList<List<PiecewiseLinearApproximation>>();
+	
+	
 	/** The number of linear segments. */
 	int numberOfLinearSegments; 
 
@@ -70,25 +90,25 @@ public class ResourceParameters {
 
 	/** The minimum storage capacity. */
 	double minimumStorageCapacity; 
-	
+
 	/** The unit conversion factor storage. */
 	double unitConversionFactorStorage = 1; 
 
 	/** The inital capacity. */
 	double initalCapacity; 
-	
+
 	/** The capacity target. */
 	double capacityTarget = -1; 
 
 	/** The capacity target comparator. */
 	String capacityTargetComparator = "Eq";
-	
+
 	/** The static power loss. */
 	double staticEnergyLoss;
-	
+
 	/** The dynamic energy loss. */
 	double dynamicEnergyLoss;
-	
+
 	/** The reference value for dynamic energy loss. */
 	double referenceDynamicEnergyLoss; 
 
@@ -118,6 +138,14 @@ public class ResourceParameters {
 		this.pla.add(plaItem);
 	}
 
+	/**
+	 * Creates the pla list for multiple inputs.
+	 */
+	public void createPlaListForMultipleInputs () {
+		
+		
+	}
+	
 
 	/**
 	 * Adds the system state.
@@ -246,7 +274,7 @@ public class ResourceParameters {
 		this.systemStates.add(state);
 	}
 
-	
+
 	/**
 	 * Adds the system state with max power output and ramp output.
 	 *
@@ -870,6 +898,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the capacity target.
+	 *
 	 * @return the capacityTarget
 	 */
 	public double getCapacityTarget() {
@@ -888,6 +918,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the capacity target comparator.
+	 *
 	 * @return the capacityTargetComparator
 	 */
 	public String getCapacityTargetComparator() {
@@ -906,6 +938,8 @@ public class ResourceParameters {
 
 
 	/**
+	 * Gets the unit conversion factor storage.
+	 *
 	 * @return the unitConversionFactorStorage
 	 */
 	public double getUnitConversionFactorStorage() {
@@ -920,6 +954,110 @@ public class ResourceParameters {
 	 */
 	public void setUnitConversionFactorStorage(double unitConversionFactorStorage) {
 		this.unitConversionFactorStorage = unitConversionFactorStorage;
+	}
+
+
+	/**
+	 * Gets the number of inputs.
+	 *
+	 * @return the numberOfInputs
+	 */
+	public int getNumberOfInputs() {
+		return numberOfInputs;
+	}
+
+
+	/**
+	 * Sets the number of inputs.
+	 *
+	 * @param numberOfInputs the numberOfInputs to set
+	 */
+	public void setNumberOfInputs(int numberOfInputs) {
+		this.numberOfInputs = numberOfInputs;
+	}
+
+
+	/**
+	 * Gets the pla list for all inputs.
+	 *
+	 * @return the plaList
+	 */
+	public List<List<PiecewiseLinearApproximation>> getPlaList() {
+		return plaList;
+	}
+
+
+	/**
+	 * Sets the pla list (list of pla for all inputs).
+	 *
+	 * @param plaList the plaList to set
+	 */
+	public void setPlaList(ArrayList<List<PiecewiseLinearApproximation>> plaList) {
+		this.plaList = plaList;
+	}
+
+	/**
+	 * Gets the energy carrier inputs.
+	 *
+	 * @return the energyCarrierInputs
+	 */
+	public List<String> getEnergyCarrierInputs() {
+		return energyCarrierInputs;
+	}
+
+	/**
+	 * Sets the energy carrier inputs.
+	 *
+	 * @param energyCarrierInputs the energyCarrierInputs to set
+	 */
+	public void setEnergyCarrierInputs(List<String> energyCarrierInputs) {
+		this.energyCarrierInputs = energyCarrierInputs;
+	}
+
+	/**
+	 * Gets the min power inputs.
+	 *
+	 * @return the minPowerInputs
+	 */
+	public List<Double> getMinPowerInputs() {
+		return minPowerInputs;
+	}
+
+	/**
+	 * Sets the min power inputs.
+	 *
+	 * @param minPowerInputs the minPowerInputs to set
+	 */
+	public void setMinPowerInputs(List<Double> minPowerInputs) {
+		this.minPowerInputs = minPowerInputs;
+	}
+
+	/**
+	 * @return the maxPowerInputs
+	 */
+	public List<Double> getMaxPowerInputs() {
+		return maxPowerInputs;
+	}
+
+	/**
+	 * @param maxPowerInputs the maxPowerInputs to set
+	 */
+	public void setMaxPowerInputs(List<Double> maxPowerInputs) {
+		this.maxPowerInputs = maxPowerInputs;
+	}
+
+	/**
+	 * @return the efficiencyInputs
+	 */
+	public List<Double> getEfficiencyInputs() {
+		return efficiencyInputs;
+	}
+
+	/**
+	 * @param efficiencyInputs the efficiencyInputs to set
+	 */
+	public void setEfficiencyInputs(List<Double> efficiencyInputs) {
+		this.efficiencyInputs = efficiencyInputs;
 	} 
 
 }

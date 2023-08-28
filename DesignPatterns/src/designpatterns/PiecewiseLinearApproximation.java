@@ -90,4 +90,44 @@ public class PiecewiseLinearApproximation {
 	}
 
 
+	/**
+	 * Sets the pla.
+	 *
+	 * @param interceptpla the interceptpla
+	 * @param slopepla the slopepla
+	 * @param lowerboundpla the lowerboundpla
+	 * @param upperboundpla the upperboundpla
+	 */
+	public void setPla (double interceptpla, double slopepla, double lowerboundpla, double upperboundpla) {
+		this.intercept = interceptpla; 
+		this.slope  = slopepla; 
+		this.lowerBound = lowerboundpla; 
+		this.upperBound = upperboundpla; 
+	}
+	
+	/**
+	 * Sets the efficiency, intercept = 0, lb = 0, ub = Double.maxvalue.
+	 *
+	 * @param efficiency the new efficiency
+	 */
+	public void setEfficiency (double efficiency) {
+		this.intercept = 0; 
+		this.slope  = efficiency; 
+		this.lowerBound = 0; 
+		this.upperBound = Double.MAX_VALUE; 
+	}
+	
+	/**
+	 * Sets the linear relationship, lb = 0, ub = Double.maxvalue.
+	 *
+	 * @param interceptLinear the intercept linear
+	 * @param slopeLinear the slope linear
+	 */
+	public void setLinearRelationship (double interceptLinear, double slopeLinear) {
+		this.intercept = interceptLinear; 
+		this.slope  = slopeLinear; 
+		this.lowerBound = 0; 
+		this.upperBound = Double.MAX_VALUE; 
+	}
+	
 }
