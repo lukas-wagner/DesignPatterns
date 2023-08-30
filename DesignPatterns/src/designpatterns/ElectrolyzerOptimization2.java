@@ -49,7 +49,7 @@ public class ElectrolyzerOptimization2 {
 	 */
 	public static void setOptimizationParameters () {
 
-		designpatterns.DesignPatterns.setOptimalityGap(0.001); // default 10e-4
+		designpatterns.DesignPatterns.setOptimalityGap(0.001); // default 10e-4 = 0.0001
 		designpatterns.DesignPatterns.setTimeInterval(0.25); // 0.05 = 3Minutes, 0.125 = 7.5 Minutes
 		designpatterns.DesignPatterns.setArrayLength(10); // set arrayLength in # of time steps
 
@@ -134,7 +134,6 @@ public class ElectrolyzerOptimization2 {
 		//		resource3.setReferenceDynamicEnergyLoss(resource3.maximumStorageCapacity);
 		DesignPatterns.getResourceParameters().add(resource3);
 	}
-
 
 	/**
 	 * Electrolyzer base model.

@@ -46,10 +46,16 @@ public class ResourceParameters {
 	double maxPowerOutput = Double.MAX_VALUE;
 
 	/** The min/max ramp. */
-	double minRamp; 
+	double minRampInput; 
 
 	/** The max ramp. */
-	double maxRamp;
+	double maxRampInput = Double.MAX_VALUE;
+	
+	/** The min ramp output. */
+	double minRampOutput; 
+	
+	/** The max ramp output. */
+	double maxRampOutput = Double.MAX_VALUE;
 
 	/** The latency of output. */
 	int latencyOfOutput;
@@ -402,7 +408,7 @@ public class ResourceParameters {
 	 * @return the minRamp
 	 */
 	public double getMinRamp() {
-		return minRamp;
+		return minRampInput;
 	}
 
 	/**
@@ -411,25 +417,25 @@ public class ResourceParameters {
 	 * @param minRamp the minRamp to set
 	 */
 	public void setMinRamp(double minRamp) {
-		this.minRamp = minRamp;
+		this.minRampInput = minRamp;
 	}
 
 	/**
-	 * Gets the max ramp.
+	 * Gets the max ramp input.
 	 *
 	 * @return the maxRamp
 	 */
-	public double getMaxRamp() {
-		return maxRamp;
+	public double getMaxRampInput() {
+		return maxRampInput;
 	}
 
 	/**
-	 * Sets the max ramp.
+	 * Sets the max ramp input.
 	 *
-	 * @param maxRamp the maxRamp to set
+	 * @param maxRampInput the maxRamp to set
 	 */
-	public void setMaxRamp(double maxRamp) {
-		this.maxRamp = maxRamp;
+	public void setMaxRampInput(double maxRampInput) {
+		this.maxRampInput = maxRampInput;
 	}
 
 	/**
@@ -1082,5 +1088,55 @@ public class ResourceParameters {
 	 */
 	public void setDegradation(double degradation) {
 		this.degradation = degradation;
+	}
+
+	/**
+	 * @return the minRampInput
+	 */
+	public double getMinRampInput() {
+		return minRampInput;
+	}
+
+	/**
+	 * @param minRampInput the minRampInput to set
+	 */
+	public void setMinRampInput(double minRampInput) {
+		this.minRampInput = minRampInput;
+	}
+
+	/**
+	 * Gets the min ramp output.
+	 *
+	 * @return the minRampOutput
+	 */
+	public double getMinRampOutput() {
+		return minRampOutput;
+	}
+
+	/**
+	 * Sets the min ramp output.
+	 *
+	 * @param minRampOutput the minRampOutput to set
+	 */
+	public void setMinRampOutput(double minRampOutput) {
+		this.minRampOutput = minRampOutput;
+	}
+
+	/**
+	 * Gets the max ramp output.
+	 *
+	 * @return the maxRampOutput
+	 */
+	public double getMaxRampOutput() {
+		return maxRampOutput;
+	}
+
+	/**
+	 * Sets the max ramp output.
+	 *
+	 * @param maxRampOutput the maxRampOutput to set
+	 */
+	public void setMaxRampOutput(double maxRampOutput) {
+		this.maxRampOutput = maxRampOutput;
 	}
 }

@@ -212,7 +212,7 @@ public class DesignPatterns {
 					getDecisionVariablesMatrix().put(nameOfStorage+"-"+POWER+"-"+STATE, statesIntArrayResource);
 					//				System.out.println("state variable "+ nameOfResource);
 				}
-				
+
 				if (getResourceParameters().get(indexOfStorage).getDegradation()!=0) {
 					IloNumVar[] stateOfChargeMax = getCplex().numVarArray(
 							getArrayLength()+1, 
@@ -596,36 +596,49 @@ public class DesignPatterns {
 			// --------------------- ramp limits ----------------------------------
 			for (int timestep = 1; timestep < getArrayLength(); timestep++) {
 				//				TODO was ist für das erste Intervall? -> pI[0] <= rampmax, pi[0]>=rampmin
-				IloNumExpr sumMinRamp = getCplex().numExpr();
-				IloNumExpr sumMaxRamp = getCplex().numExpr();
+				
 				IloNumExpr powerDifferenceEl1 = getCplex().numExpr();
-
 				powerDifferenceEl1 = getCplex().diff(relevantPowerFlowResource[timestep], relevantPowerFlowResource[timestep-1]);
 
-				for (int state = 0; state < getResourceParameters().get(indexOfResource).getNumberOfSystemStates(); state++) {
-					sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMinRampInput()));
-					sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMaxRampInput()));
+				if (getResourceParameters().get(indexOfResource).getNumberOfSystemStates()==0) {
+					// Model without states -> only one value for ramp
+					getCplex().addGe(getCplex().abs(powerDifferenceEl1), getTimeInterval()*getResourceParameters().get(indexOfResource).getMinRampInput());
+					getCplex().addLe(getCplex().abs(powerDifferenceEl1), getTimeInterval()*getResourceParameters().get(indexOfResource).getMaxRampInput());
+				} else {
+					// Case with multiple states, |states| values for ramp
+					IloNumExpr sumMinRamp = getCplex().numExpr();
+					IloNumExpr sumMaxRamp = getCplex().numExpr();
+					
+					for (int state = 0; state < getResourceParameters().get(indexOfResource).getNumberOfSystemStates(); state++) {
+						sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMinRampInput()));
+						sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMaxRampInput()));
+					}
+					getCplex().addGe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMinRamp));
+					getCplex().addLe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMaxRamp));
 				}
 
-				getCplex().addGe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMinRamp));
-				getCplex().addLe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMaxRamp));
 			}
 		} else if (port == OUTPUT) {
 			for (int timestep = 1; timestep < getArrayLength(); timestep++) {
 				//				TODO was ist für das erste Intervall? -> pI[0] <= rampmax, pi[0]>=rampmin
-				IloNumExpr sumMinRamp = getCplex().numExpr();
-				IloNumExpr sumMaxRamp = getCplex().numExpr();
 				IloNumExpr powerDifferenceEl1 = getCplex().numExpr();
-
 				powerDifferenceEl1 = getCplex().diff(relevantPowerFlowResource[timestep], relevantPowerFlowResource[timestep-1]);
-
-				for (int state = 0; state < getResourceParameters().get(indexOfResource).getNumberOfSystemStates(); state++) {
-					sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMinRampOutput()));
-					sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMaxRampOutput()));
+				
+				if (getResourceParameters().get(indexOfResource).getNumberOfSystemStates()==0) {
+					// Model without states -> only one value for ramp
+					getCplex().addGe(getCplex().abs(powerDifferenceEl1), getTimeInterval()*getResourceParameters().get(indexOfResource).getMinRampOutput());
+					getCplex().addLe(getCplex().abs(powerDifferenceEl1), getTimeInterval()*getResourceParameters().get(indexOfResource).getMaxRampOutput());
+				} else {
+					IloNumExpr sumMinRamp = getCplex().numExpr();
+					IloNumExpr sumMaxRamp = getCplex().numExpr();
+					
+					for (int state = 0; state < getResourceParameters().get(indexOfResource).getNumberOfSystemStates(); state++) {
+						sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMinRampOutput()));
+						sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMaxRampOutput()));
+					}
+					getCplex().addGe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMinRamp));
+					getCplex().addLe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMaxRamp));
 				}
-
-				getCplex().addGe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMinRamp));
-				getCplex().addLe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMaxRamp));
 			}
 		}
 		System.out.println("Ramp limits created for "+ nameOfResource);
@@ -654,12 +667,12 @@ public class DesignPatterns {
 		for (int timestep = 0; timestep < getArrayLength()+1; timestep++) {
 			if(timestep==0) {
 				getCplex().addEq(stateOfCharge[timestep], getResourceParameters().get(indexOfResource).getInitalCapacity());
-				
+
 				if (getResourceParameters().get(indexOfResource).getDegradation()>0) {
 					// set socmax to maximum storage cap.
 					getCplex().addEq(getDecisionVariableFromVector(nameOfResource, SOC+"MAX", POWER)[timestep], getResourceParameters().get(indexOfResource).getMaximumStorageCapacity());
 				}
-				
+
 			} else {
 				//			------	degradation  ------
 				if (getResourceParameters().get(indexOfResource).getDegradation()>0) {
@@ -695,7 +708,7 @@ public class DesignPatterns {
 																				getCplex().sum(														
 																						stateOfCharge[timestep], 
 																						stateOfCharge[timestep-1]
-																								)
+																						)
 																				)
 																		)
 																)
@@ -704,7 +717,7 @@ public class DesignPatterns {
 										)
 								)
 						);
-				
+
 				if (getResourceParameters().get(indexOfResource).getNumberOfSystemStates()!=0) {
 					for (int state = 0; state < getResourceParameters().get(indexOfResource).getNumberOfSystemStates(); state++) {
 						if (getResourceParameters().get(indexOfResource).getSystemStates().get(state).isInputIsEqualToOutput()==true) {
