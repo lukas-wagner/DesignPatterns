@@ -270,7 +270,8 @@ public class ElectrolyzerOptimization {
 				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY).length; j++) {
 					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-Binary-"+Integer.toString(j);
 				}
-				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp-"+nameOfModel, headerOptimizationResults);
+				String filePath = "C:/Users/Wagner/OneDrive - Helmut-Schmidt-Universität/Papers/Oncon2023/results/";; 
+				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp"+nameOfModel, headerOptimizationResults, filePath);
 			} else {
 				System.out.println("Model not solved");
 			}
@@ -452,7 +453,9 @@ public class ElectrolyzerOptimization {
 				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
 					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-STATE-"+Integer.toString(j);
 				}
-				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp-"+nameOfModel, headerOptimizationResults);
+				
+				String filePath = "C:/Users/Wagner/OneDrive - Helmut-Schmidt-Universität/Papers/Oncon2023/results/"; 
+				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp"+nameOfModel, headerOptimizationResults, filePath);
 			} else {
 				System.out.println("Model not solved");
 			}
@@ -642,7 +645,8 @@ public class ElectrolyzerOptimization {
 					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-STATE-"+Integer.toString(j);
 				}
 				headerOptimizationResults = headerOptimizationResults + ";binaryOutput1;binaryOutput2;binaryInput";
-				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp-"+nameOfModel, headerOptimizationResults);
+				String filePath = "C:/Users/Wagner/OneDrive - Helmut-Schmidt-Universität/Papers/Oncon2023/results/";; 
+				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp"+nameOfModel, headerOptimizationResults, filePath);
 			} else {
 				System.out.println("Model not solved");
 			}

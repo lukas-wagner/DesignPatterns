@@ -126,8 +126,8 @@ public class OptimizationModel {
 				//optimizationResults[i-1][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Name",Energycarrier,type)[i-1]
 				// counter++;
 				String headerOptimizationResults = ""; 
-				
-				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "designpatterns_from-method"+nameOfModel, headerOptimizationResults);
+				String filePath = "C:/Users/Wagner/OneDrive - Helmut-Schmidt-Universität/Papers/Oncon2023/results/";; 
+				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "designpatterns_from-method"+nameOfModel, headerOptimizationResults, filePath);
 			} else {
 				System.out.println("Model not solved");
 			}

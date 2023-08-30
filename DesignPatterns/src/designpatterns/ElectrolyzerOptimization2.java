@@ -39,9 +39,9 @@ public class ElectrolyzerOptimization2 {
 
 	public static void main(String[] args) throws IloException {
 		setOptimizationParameters();
-		electrolyzerBaseModel();
-		//		electrolyzerModelI();
-		//		electrolyzerModelII();
+//		electrolyzerBaseModel();
+				electrolyzerModelI();
+//				electrolyzerModelII();
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class ElectrolyzerOptimization2 {
 
 		designpatterns.DesignPatterns.setOptimalityGap(0.001); // default 10e-4
 		designpatterns.DesignPatterns.setTimeInterval(0.25); // 0.05 = 3Minutes, 0.125 = 7.5 Minutes
-		designpatterns.DesignPatterns.setArrayLength(2); // set arrayLength in # of time steps
+		designpatterns.DesignPatterns.setArrayLength(10); // set arrayLength in # of time steps
 
 		double maxPowerEl = 52.25; // MW
 
@@ -77,11 +77,13 @@ public class ElectrolyzerOptimization2 {
 		
 		resource1.getPlaList().add(input1);
 		resource1.setNumberOfLinearSegments(resource1.getPlaList().get(0).size());
-		
+		double minRamp = 0;
+		double maxRamp = 0.8*maxPowerEl/DesignPatterns.getTimeInterval(); 
 		resource1.setNumberOfInputs(resource1.getPlaList().size());
 		resource1.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
 		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
-		resource1.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl);
+//		resource1.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl);
+		resource1.addSystemStateWithRamp(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl, minRamp, maxRamp);
 		resource1.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 0.52,0.52, 0);
 		resource1.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
 		resource1.setNumberOfSystemStates(resource1.getSystemStates().size());
@@ -274,7 +276,8 @@ public class ElectrolyzerOptimization2 {
 				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,BINARY).length; j++) {
 					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-Binary-"+Integer.toString(j);
 				}
-				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp-"+nameOfModel, headerOptimizationResults);
+				String filePath = "C:/Users/Wagner/OneDrive - Helmut-Schmidt-Universität/Papers/Oncon2023/results/";
+				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp-"+nameOfModel, headerOptimizationResults, filePath);
 			} else {
 				System.out.println("Model not solved");
 			}
@@ -456,7 +459,8 @@ public class ElectrolyzerOptimization2 {
 				for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer2",POWER,STATE)[0].length; j++) {
 					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-STATE-"+Integer.toString(j);
 				}
-				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp-"+nameOfModel, headerOptimizationResults);
+				String filePath = "C:/Users/Wagner/OneDrive - Helmut-Schmidt-Universität/Papers/Oncon2023/results/";
+				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp-"+nameOfModel, headerOptimizationResults, filePath);
 			} else {
 				System.out.println("Model not solved");
 			}
@@ -646,7 +650,8 @@ public class ElectrolyzerOptimization2 {
 					headerOptimizationResults = headerOptimizationResults +";"+"Electrolyzer2-POWER-STATE-"+Integer.toString(j);
 				}
 				headerOptimizationResults = headerOptimizationResults + ";binaryOutput1;binaryOutput2;binaryInput";
-				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp-"+nameOfModel, headerOptimizationResults);
+				String filePath = "C:/Users/Wagner/OneDrive - Helmut-Schmidt-Universität/Papers/Oncon2023/results/";
+				designpatterns.DesignPatterns.writeResultsToFile(optimizationResults, "dp-"+nameOfModel, headerOptimizationResults, filePath);
 			} else {
 				System.out.println("Model not solved");
 			}

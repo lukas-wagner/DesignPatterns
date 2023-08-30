@@ -117,6 +117,8 @@ public class ResourceParameters {
 	/** The efficiency output reciprocal. */ 
 	double efficiencyOutputReciprocal = 1/efficiencyOutputStorage;
 
+	/** The degradation. */
+	double degradation;
 	/**
 	 * Creates the pla list from arguments.
 	 *
@@ -332,6 +334,32 @@ public class ResourceParameters {
 		state.setMaxRampOutput(maxRampStateOutput);
 		this.systemStates.add(state);
 	}
+	
+	/**
+	 * Adds the system state for storage, input is equal to sum output.
+	 *
+	 * @param stateID the state ID
+	 * @param stateName the state name
+	 * @param minHoldingDuration the min holding duration
+	 * @param maxHoldingDuration the max holding duration
+	 * @param idsOfFollowerStates the ids of follower states
+	 * @param minPowerState the min power state
+	 * @param maxPowerState the max power state
+	 * @param inputIsEqualToOutput the input is equal to output
+	 */
+	public void addSystemStateStorageEqualInputOutput (int stateID, String stateName, double minHoldingDuration, double maxHoldingDuration, int[] idsOfFollowerStates, double minPowerState, double maxPowerState, boolean inputIsEqualToOutput) {
+		SystemState state = new SystemState();
+		state.setStateID(stateID);
+		state.setStateName(stateName);
+		state.setMinStateDuration(minHoldingDuration);
+		state.setMaxStateDuration(maxHoldingDuration);
+		state.setFollowerStates(idsOfFollowerStates);
+		state.setMinPower(minPowerState);
+		state.setMaxPower(maxPowerState);
+		state.setInputIsEqualToOutput(inputIsEqualToOutput);
+		this.systemStates.add(state);
+	}
+	
 	/**
 	 * Gets the min power.
 	 *
@@ -1040,5 +1068,19 @@ public class ResourceParameters {
 	 */
 	public void setMaxPowerInputs(List<Double> maxPowerInputs) {
 		this.maxPowerInputs = maxPowerInputs;
+	}
+
+	/**
+	 * @return the degradation
+	 */
+	public double getDegradation() {
+		return degradation;
+	}
+
+	/**
+	 * @param degradation the degradation to set
+	 */
+	public void setDegradation(double degradation) {
+		this.degradation = degradation;
 	}
 }

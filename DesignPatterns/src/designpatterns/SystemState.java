@@ -45,6 +45,9 @@ public class SystemState {
 	/** The max ramp output. */
 	double maxRampOutput = Double.MAX_VALUE;
 	
+	/** The input is output. */
+	boolean inputIsEqualToOutput = false; 
+	
 	/**
 	 * Instantiates a new system state.
 	 *
@@ -297,4 +300,23 @@ public class SystemState {
 		this.latency = latency;
 	}
 
+	/**
+	 * Checks if is input is equal to output.
+	 * Default value = false; 
+	 *
+	 * @return the inputIsOutput
+	 */
+	public boolean isInputIsEqualToOutput() {
+		return inputIsEqualToOutput;
+	}
+
+	/**
+	 * Sets the input is equal to output.
+	 * Default value = false
+	 *
+	 * @param inputIsOutput the inputIsOutput to set
+	 */
+	public void setInputIsEqualToOutput(boolean inputIsOutput) {
+		this.inputIsEqualToOutput = inputIsOutput;
+	}
 }
