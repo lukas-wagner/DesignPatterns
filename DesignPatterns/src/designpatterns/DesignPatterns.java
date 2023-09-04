@@ -10,12 +10,17 @@ import java.util.List;
 import ilog.concert.*;
 import ilog.cplex.*;
 
+// TODO: Auto-generated Javadoc
 /**
  * The Class DesignPatterns.
  *
  * @author Lukas Wagner, lukas.wagner@hsu-hh.de
  * Code for Design Patterns for Energy Optimization.
  * Conference paper "Design Patterns for Optimization Models of Flexible Energy Resources", ONCON 2023
+ */
+/**
+ * @author Lukas Wagner, Helmut-Schmidt-University Hamburg, lukas.wagner@hsu-hh.de
+ *
  */
 public class DesignPatterns {
 
@@ -83,13 +88,14 @@ public class DesignPatterns {
 	 * @throws IloException the ilo exception
 	 */
 	public static void creationOfDecisionVariables (double maxPowerSystem) throws IloException {
+		// ----- System decision variables -----
 		IloNumVar[] powerInput = getCplex().numVarArray(getArrayLength(),  0 ,  maxPowerSystem);
 		getDecisionVariablesVector().put("System"+"-"+INPUT+"-"+POWER, powerInput);
 
 		IloNumVar[] powerOutputSystem = getCplex().numVarArray(getArrayLength(), 0, Double.MAX_VALUE);
 		getDecisionVariablesVector().put("System"+"-"+OUTPUT+"-"+POWER, powerOutputSystem);
 
-
+		// --- Create decision variables for each resource in resourceParameters -----
 		List<String> converterList = new ArrayList<String>();
 		List<String> storageList = new ArrayList<String>();
 		// extract names of list 
@@ -105,6 +111,7 @@ public class DesignPatterns {
 			}
 		}
 
+		// --- Converters ---
 		String nameOfResource; 
 		for (int resource = 0; resource < converterList.size(); resource++) {
 			nameOfResource = converterList.get(resource);			
@@ -112,17 +119,6 @@ public class DesignPatterns {
 			int indexOfResource = -1;
 			indexOfResource = findIndexByName(nameOfResource);
 			if (indexOfResource==-1) System.err.println("Resource not found in list of getResourceParameters()!");
-
-			for (int numberOfInputs = 0; numberOfInputs < getResourceParameters().get(indexOfResource).getPlaList().size(); numberOfInputs++) {
-				// TODO variablen richtig benennen
-				IloNumVar[] powerInputResource = getCplex().numVarArray(
-						getArrayLength(), 
-						getResourceParameters().get(indexOfResource).getMinPowerInput(), 
-						getResourceParameters().get(indexOfResource).getMaxPowerInput()
-						);
-				getDecisionVariablesVector().put(nameOfResource+"-"+INPUT+"-"+POWER, powerInputResource);
-				//			System.out.println("Input variable "+ nameOfResource);
-			}
 
 			IloNumVar[] powerOutputResource = getCplex().numVarArray(
 					getArrayLength(), 
@@ -132,27 +128,41 @@ public class DesignPatterns {
 			getDecisionVariablesVector().put(nameOfResource+"-"+OUTPUT+"-"+POWER, powerOutputResource);
 			//		System.out.println("Output variable "+ nameOfResource);
 
-			if (getResourceParameters().get(indexOfResource).getPlaList().get(0).size()!=0) {
-				// only create decision variable, if necessary
-				IloIntVar[][] binariesPlaResource = new IloIntVar[getResourceParameters().get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
-				for (int plaSegment = 0; plaSegment < getResourceParameters().get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
-					binariesPlaResource[plaSegment] = getCplex().intVarArray(getArrayLength(), 0 , 1);
-				}
-				getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+BINARY, binariesPlaResource);
-				//				System.out.println("binary power variable "+ nameOfResource);
+			// Create multiple decision variable per resource, one for each input (power input && (if pla) binary pla, power pla)
+			for (int numberOfInput = 0; numberOfInput < getResourceParameters().get(indexOfResource).getPlaList().size(); numberOfInput++) {
+				IloNumVar[] powerInputResource = getCplex().numVarArray(
+						getArrayLength(), 
+						getResourceParameters().get(indexOfResource).getMinPowerInputs().get(numberOfInput), 
+						getResourceParameters().get(indexOfResource).getMaxPowerInputs().get(numberOfInput)
+						);
+				getDecisionVariablesVector().put(nameOfResource+"-"+INPUT+"-"+Integer.toString(numberOfInput)+"-"+POWER, powerInputResource);
+				System.out.println(nameOfResource+"-"+INPUT+"-"+Integer.toString(numberOfInput)+"-"+POWER);
+				//			System.out.println("Input variable "+ nameOfResource);
 
-				IloNumVar[][] powerInputLinearSegmentsResource = new IloNumVar[getResourceParameters().get(indexOfResource).getNumberOfLinearSegments()][getArrayLength()]; 
-				for (int plaSegment = 0; plaSegment < getResourceParameters().get(indexOfResource).getNumberOfLinearSegments(); plaSegment++) {
-					powerInputLinearSegmentsResource[plaSegment] = getCplex().numVarArray(
-							getArrayLength(),
-							getResourceParameters().get(indexOfResource).getMinPowerInput(), 
-							getResourceParameters().get(indexOfResource).getMaxPowerInput()
-							);
+				if (getResourceParameters().get(indexOfResource).getPlaList().get(0).size()!=0) {
+					// only create decision variable, if necessary
+
+					// binary decision variable for segements of pla
+					IloIntVar[][] binariesPlaResource = new IloIntVar[getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).size()][getArrayLength()]; 
+					for (int plaSegment = 0; plaSegment < getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).size(); plaSegment++) {
+						binariesPlaResource[plaSegment] = getCplex().intVarArray(getArrayLength(), 0 , 1);
+					}
+					getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+Integer.toString(numberOfInput)+"-"+BINARY, binariesPlaResource);
+					System.out.println("binary power variable "+ nameOfResource+"-"+POWER+"-"+Integer.toString(numberOfInput)+"-"+BINARY);
+
+					// discrete decision variable for power inputs of each segement
+					IloNumVar[][] powerInputLinearSegmentsResource = new IloNumVar[getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).size()][getArrayLength()]; 
+					for (int plaSegment = 0; plaSegment < getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).size(); plaSegment++) {
+						powerInputLinearSegmentsResource[plaSegment] = getCplex().numVarArray(
+								getArrayLength(),
+								getResourceParameters().get(indexOfResource).getMinPowerInputs().get(numberOfInput), 
+								getResourceParameters().get(indexOfResource).getMaxPowerInputs().get(numberOfInput)
+								);
+					}
+					getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+Integer.toString(numberOfInput)+"-"+SEGMENT, powerInputLinearSegmentsResource);
+					System.out.println("power segment variable "+ nameOfResource+POWER+"-"+Integer.toString(numberOfInput)+"-"+SEGMENT);
 				}
-				getDecisionVariablesMatrix().put(nameOfResource+"-"+POWER+"-"+SEGMENT, powerInputLinearSegmentsResource);
-				//				System.out.println("power segment variable "+ nameOfResource);
 			}
-
 			if (getResourceParameters().get(indexOfResource).getNumberOfSystemStates()!=0) {
 				// only create decision variable, if necessary
 				IloIntVar[][] statesIntArrayResource = new IloIntVar[getArrayLength()+1][getResourceParameters().get(indexOfResource).getNumberOfSystemStates()];
@@ -167,8 +177,9 @@ public class DesignPatterns {
 			System.out.println("Created variables for "+ nameOfResource);
 		}
 
+
+		// --- Storage ---
 		String nameOfStorage = ""; 
-		// ---------------------RESOURCE  - Storage---------------------
 		for (int storage = 0; storage < storageList.size(); storage++) {
 			nameOfStorage = storageList.get(storage);		
 
@@ -242,22 +253,45 @@ public class DesignPatterns {
 		return -1; // Return -1 if name not found
 	}
 
-	public static IloNumVar[][] getDecisionVariableFromMatrix(String name, String medium, String type) {
-		return getDecisionVariablesMatrix().get(name+"-"+medium+"-"+type);
+	/**
+	 * Gets the decision variable from matrix.
+	 *
+	 * @param name the name
+	 * @param medium the medium
+	 * @param numberOfInput the number of input, if -1, omitted
+	 * @param type the type
+	 * @return the decision variable from matrix
+	 */
+	public static IloNumVar[][] getDecisionVariableFromMatrix(String name, String medium, int numberOfInput, String type) {
+		if (numberOfInput==-1) {
+			return getDecisionVariablesMatrix().get(name+"-"+medium+"-"+type);
+		}
+		else {
+			return getDecisionVariablesMatrix().get(name+"-"+medium+"-"+Integer.toString(numberOfInput)+"-"+type);
+		}
 	}
 
-	public static IloNumVar[] getDecisionVariableFromVector(String name, String port, String medium) {
-		return getDecisionVariablesVector().get(name+"-"+port+"-"+medium);
+	/**
+	 * Gets the decision variable from vector.
+	 *
+	 * @param name the name
+	 * @param port the port
+	 * @param numberOfInput the number of input, if -1, omitted
+	 * @param medium the medium
+	 * @return the decision variable from vector
+	 */
+	public static IloNumVar[] getDecisionVariableFromVector(String name, String port, int numberOfInput, String medium) {
+		if (numberOfInput==-1) {
+			return getDecisionVariablesVector().get(name+"-"+port+"-"+medium);
+		} else {
+			return getDecisionVariablesVector().get(name+"-"+port+"-"+Integer.toString(numberOfInput)+"-"+medium);
+		}
 	}
 
 	/**
 	 * Generate input output relationship.
 	 *
 	 * @param nameOfResource the name of resource
-	 * @param powerInputResource decision variable the power input resource
-	 * @param powerOutputResource decision variable  the power output resource
-	 * @param binariesPlaResource decision variable  the binaries pla resource
-	 * @param powerInputResourceLinearSegments decision variable  the power input resource linear segments
 	 * @throws IloException the ilo exception
 	 */
 	public static void generateInputOutputRelationship (String nameOfResource) throws IloException {
@@ -268,7 +302,7 @@ public class DesignPatterns {
 		if (indexOfResource==-1) System.err.println("Resource not found in list of resourceParameters!");
 
 		// get decision variables from vector/matrix
-		IloNumVar[] powerOutputResource = getDecisionVariableFromVector(nameOfResource, OUTPUT, POWER);
+		IloNumVar[] powerOutputResource = getDecisionVariableFromVector(nameOfResource, OUTPUT, -1, POWER);
 
 		if (getResourceParameters().get(indexOfResource).getNumberOfLinearSegments()==0
 				&& getResourceParameters().get(indexOfResource).getEfficiency()!=0
@@ -278,31 +312,31 @@ public class DesignPatterns {
 			System.out.println("Input-Output Relationship by Efficiency for "+ nameOfResource);
 			for (int timestep = 0; timestep < getArrayLength(); timestep++) {
 				IloNumExpr powerOutputSum = getCplex().numExpr();
-				for (int numberOfInputs = 0; numberOfInputs < getResourceParameters().get(indexOfResource).getPlaList().size(); numberOfInputs++) {
+				for (int numberOfInput = 0; numberOfInput < getResourceParameters().get(indexOfResource).getPlaList().size(); numberOfInput++) {
 					powerOutputSum = getCplex().sum(
 							powerOutputSum, 
 							getCplex().prod(
-									getDecisionVariableFromVector(nameOfResource, INPUT, POWER)[timestep], 
-									getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInputs).get(0).getSlope()
+									getDecisionVariableFromVector(nameOfResource, INPUT, numberOfInput, POWER)[timestep], 
+									getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).get(0).getSlope()
 									)
 							);
 				}
 				getCplex().addEq(powerOutputResource[timestep], powerOutputSum);
 			} 
-		} else if (getResourceParameters().get(indexOfResource).getNumberOfLinearSegments()==0
+		} else if (getResourceParameters().get(indexOfResource).getPlaList().size()==0
 				&& getResourceParameters().get(indexOfResource).getEfficiency()==0
 				&& getResourceParameters().get(indexOfResource).getSlope()!=0) {
 			// y = ax+b
 			System.out.println("Input-Output Relationship y = ax+b for "+ nameOfResource);
 			for (int timestep = 0; timestep < getArrayLength(); timestep++) {
 				IloNumExpr powerOutputSum = getCplex().numExpr();
-				for (int numberOfInputs = 0; numberOfInputs < getResourceParameters().get(indexOfResource).getPlaList().size(); numberOfInputs++) {
+				for (int numberOfInput = 0; numberOfInput < getResourceParameters().get(indexOfResource).getPlaList().size(); numberOfInput++) {
 					powerOutputSum = getCplex().sum(
 							powerOutputSum, 
-							getCplex().sum(getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInputs).get(0).getIntercept(), 
+							getCplex().sum(getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).get(0).getIntercept(), 
 									getCplex().prod(
-											getDecisionVariableFromVector(nameOfResource, INPUT, POWER)[timestep], 
-											getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInputs).get(0).getSlope()
+											getDecisionVariableFromVector(nameOfResource, INPUT,numberOfInput, POWER)[timestep], 
+											getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).get(0).getSlope()
 											)
 									)
 							);
@@ -323,45 +357,38 @@ public class DesignPatterns {
 					for (int plaSegment = 0; plaSegment < getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).size(); plaSegment++) {
 
 						// lowerBound * power <= binary
-						// TODO dynamisch anpassen, richtige Variable holen
 						getCplex().addLe(
 								getCplex().prod(
 										getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).get(plaSegment).getLowerBound(), 
-										(IloIntVar) getDecisionVariableFromMatrix(nameOfResource, POWER, BINARY)[plaSegment][timestep]
+										(IloIntVar) getDecisionVariableFromMatrix(nameOfResource, POWER, numberOfInput, BINARY)[plaSegment][timestep]
 										), 
-								getDecisionVariableFromMatrix(nameOfResource, POWER, SEGMENT)[plaSegment][timestep]
+								getDecisionVariableFromMatrix(nameOfResource, POWER, numberOfInput, SEGMENT)[plaSegment][timestep]
 								);
 
 						//power <= upperBound * binary
-						// TODO dynamisch anpassen, richtige Variable holen
 						getCplex().addLe(
-								getDecisionVariableFromMatrix(nameOfResource, POWER, SEGMENT)[plaSegment][timestep], 
+								getDecisionVariableFromMatrix(nameOfResource, POWER, numberOfInput, SEGMENT)[plaSegment][timestep], 
 								getCplex().prod(
 										getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).get(plaSegment).getUpperBound(), 
-										(IloIntVar) getDecisionVariableFromMatrix(nameOfResource, POWER, BINARY)[plaSegment][timestep]
+										(IloIntVar) getDecisionVariableFromMatrix(nameOfResource, POWER, numberOfInput, BINARY)[plaSegment][timestep]
 										)
 								);
 
 						// sum binaries[i] = 1 part 2
-						// TODO dynamisch anpassen, richtige Variable holen
-						binarySum = getCplex().sum(binarySum,(IloIntVar) getDecisionVariableFromMatrix(nameOfResource, POWER, BINARY)[plaSegment][timestep]);
-						//					binarySum = getCplex().sum(binarySum,binariesPlaResource[plaSegment][timestep]);
-						// TODO dynamisch anpassen, richtige Variable holen
-
-						powerInputSum = getCplex().sum(powerInputSum, getDecisionVariableFromMatrix(nameOfResource, POWER, SEGMENT)[plaSegment][timestep]);
+						binarySum = getCplex().sum(binarySum,(IloIntVar) getDecisionVariableFromMatrix(nameOfResource, POWER, numberOfInput, BINARY)[plaSegment][timestep]);
+						powerInputSum = getCplex().sum(powerInputSum, getDecisionVariableFromMatrix(nameOfResource, POWER, numberOfInput, SEGMENT)[plaSegment][timestep]);
 					}
 
 					// sum binaries[i] = 1 part 3           
 					getCplex().addEq(binarySum, 1);
 
 					// sum powerInputElectrolyzer1LinearSegments[i] = powerOutputElectrolyzer1[i] part 3
-					// TODO dynamisch anpassen, richtige Variable holen
-					getCplex().addEq(powerInputSum, getDecisionVariableFromVector(nameOfResource, INPUT, POWER)[timestep]);
+					getCplex().addEq(powerInputSum, getDecisionVariableFromVector(nameOfResource, INPUT, numberOfInput, POWER)[timestep]);
 
 					for (int plaSegment = 0; plaSegment < getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).size(); plaSegment++) {
 						getCplex().add(
 								getCplex().ifThen(
-										getCplex().eq((IloIntVar) getDecisionVariableFromMatrix(nameOfResource, POWER, BINARY)[plaSegment][timestep], 1),
+										getCplex().eq((IloIntVar) getDecisionVariableFromMatrix(nameOfResource, POWER, numberOfInput, BINARY)[plaSegment][timestep], 1),
 										getCplex().eq(powerOutputResource[timestep],
 												getCplex().sum(
 														getResourceParameters().get(indexOfResource).getPlaList().get(numberOfInput).get(plaSegment).getIntercept(),
@@ -386,11 +413,9 @@ public class DesignPatterns {
 
 	/**
 	 * Generate system state selection by power limits.
+	 * System state selection always based on 1st input!
 	 *
 	 * @param nameOfResource the name of resource
-	 * @param powerInputResource the power input resource
-	 * @param powerOutputResource the power output resource
-	 * @param statesIntArrayResource the states int array resource
 	 * @throws IloException the ilo exception
 	 */
 	public static void generateSystemStateSelectionByPowerLimits (String nameOfResource) throws IloException {
@@ -400,14 +425,13 @@ public class DesignPatterns {
 		if (indexOfResource==-1) System.err.println("Resource not found in list of getResourceParameters()!");
 
 		if (getResourceParameters().get(indexOfResource).isStorage()==false) {
-			// TODO dynamisch anpassen
-			IloNumVar[] powerInputResource = getDecisionVariableFromVector(nameOfResource, INPUT, POWER);
-			IloNumVar[] powerOutputResource  = getDecisionVariableFromVector(nameOfResource, OUTPUT, POWER);
-			IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, STATE);
+			// 1st input is always relevant for system states
+			IloNumVar[] powerInputResource = getDecisionVariableFromVector(nameOfResource, INPUT, 0, POWER);
+			IloNumVar[] powerOutputResource  = getDecisionVariableFromVector(nameOfResource, OUTPUT, -1, POWER);
+			IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, -1, STATE);
 
 			//set initial system state, all other states = 0 
 			getCplex().addEq(statesIntArrayResource[0][getResourceParameters().get(indexOfResource).getInitialSystemState()], 1);
-			//		getCplex().addEq(statesIntArrayResource[0][1], 1);
 			getCplex().addEq(getCplex().sum(statesIntArrayResource[0]), 1);
 
 			for (int timestep = 1; timestep < getArrayLength()+1; timestep++) {
@@ -448,9 +472,9 @@ public class DesignPatterns {
 		else {
 			// Create system states for storage by SOC
 
-			IloNumVar[] powerOutputResource  = getDecisionVariableFromVector(nameOfResource, OUTPUT, POWER);
-			IloNumVar[] stateOfChargeResource  = getDecisionVariableFromVector(nameOfResource, SOC, POWER);
-			IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, STATE);
+			IloNumVar[] powerOutputResource  = getDecisionVariableFromVector(nameOfResource, OUTPUT,-1, POWER);
+			IloNumVar[] stateOfChargeResource  = getDecisionVariableFromVector(nameOfResource, SOC,-1, POWER);
+			IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, -1,  STATE);
 
 			//set initial system state, all other states = 0 
 			getCplex().addEq(statesIntArrayResource[0][getResourceParameters().get(indexOfResource).getInitialSystemState()], 1);
@@ -498,7 +522,6 @@ public class DesignPatterns {
 	 * Generate state sequences and holding duration.
 	 *
 	 * @param nameOfResource the name of resource
-	 * @param statesIntArrayResource the states int array resource
 	 * @throws IloException the ilo exception
 	 */
 	public static void generateStateSequencesAndHoldingDuration (String nameOfResource) throws IloException {
@@ -506,8 +529,7 @@ public class DesignPatterns {
 		int indexOfResource = -1;
 		indexOfResource = findIndexByName(nameOfResource);
 		if (indexOfResource==-1) System.err.println("Resource not found in list of getResourceParameters()!");
-		// TODO Dynamisch anpassen
-		IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, STATE);
+		IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, -1, STATE);
 
 		for (int timestep = 1; timestep < getArrayLength()+1; timestep++) {
 
@@ -525,7 +547,6 @@ public class DesignPatterns {
 						try {
 							constraintRightSide = getCplex().sum(constraintRightSide,statesIntArrayResource[timestep+timeInStateCounter][state]);
 							counter++; 
-
 						} catch (Exception e) {
 							// TODO: handle exception
 						} 
@@ -573,12 +594,10 @@ public class DesignPatterns {
 	}
 
 	/**
-	 * Generate ramp limits.
+	 * Generate ramp limits for 1st input.
 	 *
 	 * @param nameOfResource the name of resource
 	 * @param port the side (INPUT XOR OUTPUT)
-	 * @param relevantPowerFlowResource the power input resource
-	 * @param statesIntArrayResource the states int array resource
 	 * @throws IloException the ilo exception
 	 */
 	public static void generateRampLimits (String nameOfResource, String port) throws IloException {
@@ -586,11 +605,8 @@ public class DesignPatterns {
 		indexOfResource = findIndexByName(nameOfResource);
 		if (indexOfResource==-1) System.err.println("Resource not found in list of getResourceParameters()!");
 
-		// TODO dynamisch anpassen
-
-		// TODO dynamisch anpassen
-		IloNumVar[] relevantPowerFlowResource = getDecisionVariableFromVector(nameOfResource, port, POWER); 
-		IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, STATE);
+		IloNumVar[] relevantPowerFlowResource = getDecisionVariableFromVector(nameOfResource, port, 0, POWER); 
+		IloIntVar[][] statesIntArrayResource = (IloIntVar[][]) getDecisionVariableFromMatrix(nameOfResource, POWER, -1, STATE);
 
 		if (port == INPUT) {
 			// --------------------- ramp limits ----------------------------------
@@ -610,8 +626,20 @@ public class DesignPatterns {
 					IloNumExpr sumMaxRamp = getCplex().numExpr();
 
 					for (int state = 0; state < getResourceParameters().get(indexOfResource).getNumberOfSystemStates(); state++) {
-						sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMinRampInput()));
-						sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMaxRampInput()));
+						sumMinRamp = getCplex().sum(
+								sumMinRamp, 
+								getCplex().prod(
+										statesIntArrayResource[timestep][state], // TODO check if timestep+1 is correct
+										getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMinRampInput()
+										)
+								);
+						sumMaxRamp = getCplex().sum(
+								sumMaxRamp, 
+								getCplex().prod(
+										statesIntArrayResource[timestep][state], 
+										getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMaxRampInput()
+										)
+								);
 					}
 					getCplex().addGe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMinRamp));
 					getCplex().addLe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMaxRamp));
@@ -633,8 +661,20 @@ public class DesignPatterns {
 					IloNumExpr sumMaxRamp = getCplex().numExpr();
 
 					for (int state = 0; state < getResourceParameters().get(indexOfResource).getNumberOfSystemStates(); state++) {
-						sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMinRampOutput()));
-						sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMaxRampOutput()));
+						sumMinRamp = getCplex().sum(
+								sumMinRamp, 
+								getCplex().prod(
+										statesIntArrayResource[timestep][state], 
+										getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMinRampOutput()
+										)
+								);
+						sumMaxRamp = getCplex().sum(
+								sumMaxRamp, 
+								getCplex().prod(
+										statesIntArrayResource[timestep][state], 
+										getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMaxRampOutput()
+										)
+								);
 					}
 					getCplex().addGe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMinRamp));
 					getCplex().addLe(getCplex().abs(powerDifferenceEl1), getCplex().prod(getTimeInterval(), sumMaxRamp));
@@ -648,9 +688,6 @@ public class DesignPatterns {
 	 * Generate energy balance for storage system.
 	 *
 	 * @param nameOfResource the name of resource
-	 * @param stateOfCharge the state of charge
-	 * @param powerInputStorage the power input storage
-	 * @param powerOutputStorage the power output storage
 	 * @throws IloException the ilo exception
 	 */
 	public static void generateEnergyBalanceForStorageSystem (String nameOfResource) throws IloException {
@@ -659,9 +696,10 @@ public class DesignPatterns {
 		if (indexOfResource==-1) System.err.println("Resource not found in list of getResourceParameters()!");
 		if (getResourceParameters().get(indexOfResource).isStorage()==false) System.err.println("System "+ nameOfResource + " is not a storage system!");
 
-		IloNumVar[] stateOfCharge = getDecisionVariableFromVector(nameOfResource, SOC, POWER);
-		IloNumVar[] powerInputStorage = getDecisionVariableFromVector(nameOfResource, INPUT, POWER); 
-		IloNumVar[] powerOutputStorage = getDecisionVariableFromVector(nameOfResource, OUTPUT, POWER);
+		IloNumVar[] stateOfCharge = getDecisionVariableFromVector(nameOfResource, SOC, -1, POWER);
+		IloNumVar[] powerInputStorage = getDecisionVariableFromVector(nameOfResource, INPUT, -1, POWER); 
+		IloNumVar[] powerOutputStorage = getDecisionVariableFromVector(nameOfResource, OUTPUT, -1, POWER);
+		IloNumVar[] maxStateOfCharge = getDecisionVariableFromVector(nameOfResource, SOC+"MAX", -1, POWER);
 
 		// --------------------- storage and loss ----------------------------------
 		for (int timestep = 0; timestep < getArrayLength()+1; timestep++) {
@@ -670,21 +708,21 @@ public class DesignPatterns {
 
 				if (getResourceParameters().get(indexOfResource).getDegradation()>0) {
 					// set socmax to maximum storage cap.
-					getCplex().addEq(getDecisionVariableFromVector(nameOfResource, SOC+"MAX", POWER)[timestep], getResourceParameters().get(indexOfResource).getMaximumStorageCapacity());
+					getCplex().addEq(maxStateOfCharge[timestep], getResourceParameters().get(indexOfResource).getMaximumStorageCapacity());
 				}
 
 			} else {
 				//			------	degradation  ------
 				if (getResourceParameters().get(indexOfResource).getDegradation()>0) {
 					// if deg > 0, socmax(t) = socmax(t-1)-deg && soc(t) <= socmax(t)
-					getCplex().addEq(getDecisionVariableFromVector(nameOfResource, SOC+"MAX", POWER)[timestep],
+					getCplex().addEq(maxStateOfCharge[timestep],
 							getCplex().diff(
-									getDecisionVariableFromVector(nameOfResource, SOC+"MAX", POWER)[timestep-1],
+									maxStateOfCharge[timestep-1],
 									getResourceParameters().get(indexOfResource).getDegradation()
 									)
 							);
 					getCplex().addLe(stateOfCharge[timestep],
-							getDecisionVariableFromVector(nameOfResource, SOC+"MAX", POWER)[timestep]
+							maxStateOfCharge[timestep]
 							);
 				}
 
@@ -724,7 +762,7 @@ public class DesignPatterns {
 							getCplex().add(
 									getCplex().ifThen(									
 											getCplex().eq(
-													getDecisionVariableFromMatrix(nameOfResource, POWER, STATE)[timestep][state], 
+													getDecisionVariableFromMatrix(nameOfResource, POWER, -1, STATE)[timestep][state], 
 													1
 													),
 											getCplex().eq(
@@ -809,7 +847,7 @@ public class DesignPatterns {
 	 * @param powerOutputs array of all relevant power output arrays (new IloNumVar [][] {})
 	 * @param powerInputs array of all relevant power input arrays (new IloNumVar [][] {})
 	 * @return the ilo int var[][][] of all binary decision variables created in method
-	 * @return  [2 -> powerOutputs, powerInputs][getArrayLength()][number of Elements in powerOutputs/power Inputs, depends on index in first[]	]
+	 *  [2 -> powerOutputs, powerInputs][getArrayLength()][number of Elements in powerOutputs/power Inputs, depends on index in first[]	]
 	 * @throws IloException the ilo exception
 	 */
 	public static IloIntVar[][][] generateRestrictiveDependency (IloNumVar[][] powerOutputs, IloNumVar[][] powerInputs) throws IloException {
@@ -879,6 +917,7 @@ public class DesignPatterns {
 	 * @param contentToWrite the content to write
 	 * @param fileName the file name
 	 * @param header the header
+	 * @param filePath the file path
 	 */
 	public static void writeResultsToFile (double[][] contentToWrite, String fileName, String header, String filePath) {
 		String date = Double.toString(System.currentTimeMillis());
@@ -1064,6 +1103,8 @@ public class DesignPatterns {
 	}
 
 	/**
+	 * Gets the decision variables vector.
+	 *
 	 * @return the decisionVariables
 	 */
 	public static HashMap<String, IloNumVar[]> getDecisionVariablesVector() {
@@ -1071,6 +1112,8 @@ public class DesignPatterns {
 	}
 
 	/**
+	 * Sets the decision variables vector.
+	 *
 	 * @param decisionVariables the decisionVariables to set
 	 */
 	public static void setDecisionVariablesVector(HashMap<String, IloNumVar[]> decisionVariables) {
@@ -1078,6 +1121,8 @@ public class DesignPatterns {
 	}
 
 	/**
+	 * Gets the decision variables matrix.
+	 *
 	 * @return the decisionVariablesMatrix
 	 */
 	public static HashMap<String, IloNumVar[][]> getDecisionVariablesMatrix() {
@@ -1085,6 +1130,8 @@ public class DesignPatterns {
 	}
 
 	/**
+	 * Sets the decision variables matrix.
+	 *
 	 * @param decisionVariablesMatrix the decisionVariablesMatrix to set
 	 */
 	public static void setDecisionVariablesMatrix(HashMap<String, IloNumVar[][]> decisionVariablesMatrix) {
@@ -1092,6 +1139,8 @@ public class DesignPatterns {
 	}
 
 	/**
+	 * Gets the resource parameters.
+	 *
 	 * @return the getResourceParameters()
 	 */
 	public static List<ResourceParameters> getResourceParameters() {
@@ -1099,6 +1148,8 @@ public class DesignPatterns {
 	}
 
 	/**
+	 * Sets the resource parameters.
+	 *
 	 * @param resourceParameters the resourceParameters to set
 	 */
 	public static void setResourceParameters(List<ResourceParameters> resourceParameters) {
