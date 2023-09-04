@@ -304,7 +304,7 @@ public class DesignPatterns {
 		// get decision variables from vector/matrix
 		IloNumVar[] powerOutputResource = getDecisionVariableFromVector(nameOfResource, OUTPUT, -1, POWER);
 
-		if (getResourceParameters().get(indexOfResource).getNumberOfLinearSegments()==0
+		if (getResourceParameters().get(indexOfResource).getPlaList().size()==0
 				&& getResourceParameters().get(indexOfResource).getEfficiency()!=0
 				//				&& getResourceParameters().get(indexOfResource).getNumberOfInputs()==1
 				) {

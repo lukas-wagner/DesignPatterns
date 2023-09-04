@@ -74,16 +74,10 @@ public class ResourceParameters {
 	
 	/** The intercept. */
 	double slope, intercept; 
-
-	/** The pla. */
-	List<PiecewiseLinearApproximation> pla = new ArrayList<PiecewiseLinearApproximation>();
 	
 	/** The pla list for all inputs. */
 	List<List<PiecewiseLinearApproximation>> plaList = new ArrayList<List<PiecewiseLinearApproximation>>();
 	
-	/** The number of linear segments. */
-	int numberOfLinearSegments; 
-
 	/**  Storage Specific parameters. */
 	boolean isStorage = false; 
 
@@ -133,23 +127,15 @@ public class ResourceParameters {
 	 * @param lowerboundpla the lowerboundpla
 	 * @param upperboundpla the upperboundpla
 	 */
-	public void createPlaList (double interceptpla, double slopepla, double lowerboundpla, double upperboundpla) {
-		PiecewiseLinearApproximation plaItem = new PiecewiseLinearApproximation();
-		plaItem.setIntercept(interceptpla);
-		plaItem.setSlope(slopepla);
-		plaItem.setUpperBound(upperboundpla);
-		plaItem.setLowerBound(lowerboundpla);
-		this.pla.add(plaItem);
-	}
+//	public void createPlaList (double interceptpla, double slopepla, double lowerboundpla, double upperboundpla) {
+//		PiecewiseLinearApproximation plaItem = new PiecewiseLinearApproximation();
+//		plaItem.setIntercept(interceptpla);
+//		plaItem.setSlope(slopepla);
+//		plaItem.setUpperBound(upperboundpla);
+//		plaItem.setLowerBound(lowerboundpla);
+//		this.pla.add(plaItem);
+//	}
 
-	/**
-	 * Creates the pla list for multiple inputs.
-	 */
-	public void createPlaListForMultipleInputs () {
-		
-		
-	}
-	
 
 	/**
 	 * Adds the system state.
@@ -528,43 +514,6 @@ public class ResourceParameters {
 		this.intercept = intercept;
 	}
 
-
-
-	/**
-	 * Gets the number of linear segments.
-	 *
-	 * @return the numberOfLinearSegments
-	 */
-	public int getNumberOfLinearSegments() {
-		return numberOfLinearSegments;
-	}
-
-	/**
-	 * Sets the number of linear segments.
-	 *
-	 * @param numberOfLinearSegments the numberOfLinearSegments to set
-	 */
-	public void setNumberOfLinearSegments(int numberOfLinearSegments) {
-		this.numberOfLinearSegments = numberOfLinearSegments;
-	}
-
-	/**
-	 * Gets the pla.
-	 *
-	 * @return the pla
-	 */
-	public List<PiecewiseLinearApproximation> getPla() {
-		return pla;
-	}
-
-	/**
-	 * Sets the pla.
-	 *
-	 * @param pla the pla to set
-	 */
-	public void setPla(List<PiecewiseLinearApproximation> pla) {
-		this.pla = pla;
-	}
 
 
 	/**
