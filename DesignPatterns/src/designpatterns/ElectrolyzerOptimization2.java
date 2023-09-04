@@ -39,7 +39,7 @@ public class ElectrolyzerOptimization2 {
 
 	public static void main(String[] args) throws IloException {
 		setOptimizationParameters();
-//		electrolyzerBaseModel();
+//	electrolyzerBaseModel();
 				electrolyzerModelI();
 //				electrolyzerModelII();
 	}
@@ -49,7 +49,7 @@ public class ElectrolyzerOptimization2 {
 	 */
 	public static void setOptimizationParameters () {
 
-		designpatterns.DesignPatterns.setOptimalityGap(0.001); // default 10e-4 = 0.0001
+		designpatterns.DesignPatterns.setOptimalityGap(0.01); // default 10e-4 = 0.001
 		designpatterns.DesignPatterns.setTimeInterval(0.25); // 0.05 = 3Minutes, 0.125 = 7.5 Minutes
 		designpatterns.DesignPatterns.setArrayLength(10); // set arrayLength in # of time steps
 
@@ -81,10 +81,12 @@ public class ElectrolyzerOptimization2 {
 		double maxRamp = 0.8*maxPowerEl/DesignPatterns.getTimeInterval(); 
 		resource1.setNumberOfInputs(resource1.getPlaList().size());
 		resource1.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
-		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
+//		resource1.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
+		resource1.addSystemStateWithMaxPowerOutputAndRampInput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0,  minRamp, maxRamp);
 //		resource1.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl);
 		resource1.addSystemStateWithRamp(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl, minRamp, maxRamp);
-		resource1.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 0.52,0.52, 0);
+		resource1.addSystemStateWithMaxPowerOutputAndRampInput(3, "stand-by", 0, 10, new int[] {2,4}, 0.52, 0.52, 0, minRamp, maxRamp);
+//		resource1.addSystemStateWithMaxPowerOutput(3, "stand-by", 0, 10, new int[] {2,4}, 0.52,0.52, 0);
 		resource1.addSystemStateWithMaxPowerOutput(4, "shut down", 2, 2, new int[] {0}, 0, 7, 0);
 		resource1.setNumberOfSystemStates(resource1.getSystemStates().size());
 		resource1.setInitialSystemState(2);
@@ -230,7 +232,7 @@ public class ElectrolyzerOptimization2 {
 					counter++; 
 					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", OUTPUT, POWER)[i-1]);
 					counter++; 
-					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", SOC, POWER)[i-1]);
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", SOC, POWER)[i]);
 					counter++; 
 
 					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT).length; j++) {
@@ -398,7 +400,7 @@ public class ElectrolyzerOptimization2 {
 					counter++; 
 					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", OUTPUT, POWER)[i-1]);
 					counter++; 
-					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", SOC, POWER)[i-1]);
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", SOC, POWER)[i]);
 					counter++; 
 
 					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT).length; j++) {
@@ -579,7 +581,7 @@ public class ElectrolyzerOptimization2 {
 					counter++; 
 					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", OUTPUT, POWER)[i-1]);
 					counter++; 
-					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", SOC, POWER)[i-1]);
+					optimizationResults[i][counter] = designpatterns.DesignPatterns.getCplex().getValue(designpatterns.DesignPatterns.getDecisionVariableFromVector("Storage", SOC, POWER)[i]);
 					counter++; 
 
 					for (int j = 0; j < designpatterns.DesignPatterns.getDecisionVariableFromMatrix("Electrolyzer1",POWER,SEGMENT).length; j++) {

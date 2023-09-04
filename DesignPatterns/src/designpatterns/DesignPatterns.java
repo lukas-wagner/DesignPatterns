@@ -596,7 +596,7 @@ public class DesignPatterns {
 			// --------------------- ramp limits ----------------------------------
 			for (int timestep = 1; timestep < getArrayLength(); timestep++) {
 				//				TODO was ist für das erste Intervall? -> pI[0] <= rampmax, pi[0]>=rampmin
-				
+
 				IloNumExpr powerDifferenceEl1 = getCplex().numExpr();
 				powerDifferenceEl1 = getCplex().diff(relevantPowerFlowResource[timestep], relevantPowerFlowResource[timestep-1]);
 
@@ -608,7 +608,7 @@ public class DesignPatterns {
 					// Case with multiple states, |states| values for ramp
 					IloNumExpr sumMinRamp = getCplex().numExpr();
 					IloNumExpr sumMaxRamp = getCplex().numExpr();
-					
+
 					for (int state = 0; state < getResourceParameters().get(indexOfResource).getNumberOfSystemStates(); state++) {
 						sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMinRampInput()));
 						sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMaxRampInput()));
@@ -623,7 +623,7 @@ public class DesignPatterns {
 				//				TODO was ist für das erste Intervall? -> pI[0] <= rampmax, pi[0]>=rampmin
 				IloNumExpr powerDifferenceEl1 = getCplex().numExpr();
 				powerDifferenceEl1 = getCplex().diff(relevantPowerFlowResource[timestep], relevantPowerFlowResource[timestep-1]);
-				
+
 				if (getResourceParameters().get(indexOfResource).getNumberOfSystemStates()==0) {
 					// Model without states -> only one value for ramp
 					getCplex().addGe(getCplex().abs(powerDifferenceEl1), getTimeInterval()*getResourceParameters().get(indexOfResource).getMinRampOutput());
@@ -631,7 +631,7 @@ public class DesignPatterns {
 				} else {
 					IloNumExpr sumMinRamp = getCplex().numExpr();
 					IloNumExpr sumMaxRamp = getCplex().numExpr();
-					
+
 					for (int state = 0; state < getResourceParameters().get(indexOfResource).getNumberOfSystemStates(); state++) {
 						sumMinRamp = getCplex().sum(sumMinRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMinRampOutput()));
 						sumMaxRamp = getCplex().sum(sumMaxRamp, getCplex().prod(statesIntArrayResource[timestep][state], getResourceParameters().get(indexOfResource).getSystemStates().get(state).getMaxRampOutput()));
@@ -949,7 +949,7 @@ public class DesignPatterns {
 	 * @return the electricity price
 	 */
 	public static double[] getElectricityPrice() {
-		double[] electricityPrice = new double[] {
+		double[] electricityPrice = new double[] { // January 1, 2022, 15 min intervals
 				85.87,37.21,32.62,32.27,51.03,63.76,44.84,39.2,58.28,43.46,42.47,47.48, 58.96,42.99,43.27,50.5,
 				80.21,30.64,21.47,35.41,15.67,24.15,43.98,55.36,23.58,42.56,60.2,87.49,22.46,38.95,	31.68,60.19,
 				17.49,37.23,40.51,57.98,46.62,46.74,61.23,71.33,57.2,55.6,59.39,81.35,48.79,58.3,58.01,57.73,71.85,
@@ -957,6 +957,14 @@ public class DesignPatterns {
 				85.41,98.72,75.05,98.16,101.62,96.88,127.03,92.24,102.1,79.11,140.98,93.1,91.67,66.07,125.87,89.96,
 				76.41,48.12,100.5,74.96,74.03,64.77,100.75,75.26,87.21,38.04,85.35,60.38,56.9,35.95
 		};
+		//		double[] electricityPrice = new double[] { // August 26, 2023, 00:00 - August 27, 2023, 00:00, 15 min intervals
+		//		115.88,104.66,99.99,95.36,109,107.89,94.54,87.74,106.97,102.6,101.23,106.16,91.08,89.26,94.37,107.41,
+		//		97.82,90.27,73.52,62.21,95.23,85.87,85.79,77.51,127.21,110.5,93.04,78.65,123.35,102.21,75.56,53.01,
+		//		104.54,79.9,59.67,19.16,60.36,44.72,26.03,-7.05,36.85,24.22,-3.42,-16.45,20.59,4.73,13.12,36.61,
+		//		13.92,60.28,105.42,112.23,30.37,77.14,97.85,114.95,56.74,83.3,86.28,103.04,62.73,88,108.72,125.41,
+		//		83.86,84.63,85.69,111.87,94.58,103.35,117.73,139.37,129.27,121.79,116.69,113.81,150.2,117.93,110.31,
+		//		99.2,127.92,116.31,110.86,97.64,117.74,98.9,92.52,83.89,101.77,104.11,95.6,92.89,98.93,101.33,92.34,91,102.06
+		//		};
 		double[] electricityPriceNew = new double[getArrayLength()];
 
 
