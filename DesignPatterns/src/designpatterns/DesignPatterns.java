@@ -1024,6 +1024,35 @@ public class DesignPatterns {
 	}
 
 	/**
+	 * Gets the electricity price with other interval.
+	 * Put price[i] in array multiple times in 15 min intervals
+	 * works for 3 and 7.5 min (0.05 h, 0.125 h)
+	 *
+	 * @param newLengthInMinutes the new length in minutes
+	 * @return the electricity price with other interval
+	 */
+	public static double[] getElectricityPriceWithOtherInterval (double newLengthInMinutes) {
+		if (newLengthInMinutes == 0.05 || newLengthInMinutes== 0.125) {
+			int arrayLengthOld = getElectricityPrice().length;
+			int multiplier = (int) (0.25/newLengthInMinutes);
+			int arrayLengthNew = multiplier*arrayLengthOld;
+			double[] longPrice = new double[arrayLengthNew];
+
+			int counter = 0; 
+			for (int i = 0; i < arrayLengthOld; i++) {
+				for (int k = 0; k < multiplier; k++) {
+					longPrice[counter] = getElectricityPrice()[i];
+					counter++; 
+				}
+			}
+			return longPrice;
+		} else {
+			System.err.println("Check interval!");
+			return null;
+		}
+	}
+
+	/**
 	 * Gets the cplex.
 	 *
 	 * @return the cplex
