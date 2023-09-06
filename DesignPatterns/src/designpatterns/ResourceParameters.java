@@ -1,6 +1,7 @@
 package designpatterns;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 // TODO: Auto-generated Javadoc
@@ -68,6 +69,12 @@ public class ResourceParameters {
 
 	/** The initial system state. */
 	int initialSystemState = 0; 
+	
+	/** The is secondary resource. */
+	boolean isSecondaryResource = false; 
+	
+	/** The primary resource. */
+	String primaryResource = ""; 
 
 	/**  Efficiencies/IO Relation. */
 	double efficiency; 
@@ -90,14 +97,8 @@ public class ResourceParameters {
 	/** The unit conversion factor storage. */
 	double unitConversionFactorStorage = 1; 
 
-	/** The inital capacity. */
-	double initalCapacity; 
-
-	/** The capacity target. */
-	double capacityTarget = -1; 
-
-	/** The capacity target comparator. */
-	String capacityTargetComparator = "Eq";
+	/** The capacity set points. */
+	HashMap<Integer, Double> capacitySetPoints = new HashMap<Integer, Double>();
 
 	/** The static power loss. */
 	double staticEnergyLoss;
@@ -119,13 +120,17 @@ public class ResourceParameters {
 
 	/** The degradation. */
 	double degradation;
+	
 	/**
 	 * Creates the pla list from arguments.
 	 *
-	 * @param interceptpla the interceptpla
-	 * @param slopepla the slopepla
-	 * @param lowerboundpla the lowerboundpla
-	 * @param upperboundpla the upperboundpla
+	 * @param stateID the state ID
+	 * @param stateName the state name
+	 * @param minHoldingDuration the min holding duration
+	 * @param maxHoldingDuration the max holding duration
+	 * @param idsOfFollowerStates the ids of follower states
+	 * @param minPowerState the min power state
+	 * @param maxPowerState the max power state
 	 */
 //	public void createPlaList (double interceptpla, double slopepla, double lowerboundpla, double upperboundpla) {
 //		PiecewiseLinearApproximation plaItem = new PiecewiseLinearApproximation();
@@ -576,24 +581,6 @@ public class ResourceParameters {
 	}
 
 
-	/**
-	 * Gets the inital capacity.
-	 *
-	 * @return the initalCapacity
-	 */
-	public double getInitalCapacity() {
-		return initalCapacity;
-	}
-
-
-	/**
-	 * Sets the inital capacity.
-	 *
-	 * @param initalCapacity the initalCapacity to set
-	 */
-	public void setInitalCapacity(double initalCapacity) {
-		this.initalCapacity = initalCapacity;
-	}
 
 
 	/**
@@ -877,46 +864,6 @@ public class ResourceParameters {
 
 
 	/**
-	 * Gets the capacity target.
-	 *
-	 * @return the capacityTarget
-	 */
-	public double getCapacityTarget() {
-		return capacityTarget;
-	}
-
-
-	/**
-	 * Sets the capacity target at last time step.
-	 *
-	 * @param capacityTarget the capacityTarget to set
-	 */
-	public void setCapacityTarget(double capacityTarget) {
-		this.capacityTarget = capacityTarget;
-	}
-
-
-	/**
-	 * Gets the capacity target comparator.
-	 *
-	 * @return the capacityTargetComparator
-	 */
-	public String getCapacityTargetComparator() {
-		return capacityTargetComparator;
-	}
-
-
-	/**
-	 * Sets the capacity target comparator (Eq =, Ge =>, Le <=).
-	 *
-	 * @param capacityTargetComparator the capacityTargetComparator to set
-	 */
-	public void setCapacityTargetComparator(String capacityTargetComparator) {
-		this.capacityTargetComparator = capacityTargetComparator;
-	}
-
-
-	/**
 	 * Gets the unit conversion factor storage.
 	 *
 	 * @return the unitConversionFactorStorage
@@ -1012,6 +959,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the max power inputs.
+	 *
 	 * @return the maxPowerInputs
 	 */
 	public List<Double> getMaxPowerInputs() {
@@ -1019,6 +968,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the max power inputs.
+	 *
 	 * @param maxPowerInputs the maxPowerInputs to set
 	 */
 	public void setMaxPowerInputs(List<Double> maxPowerInputs) {
@@ -1026,6 +977,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the degradation.
+	 *
 	 * @return the degradation
 	 */
 	public double getDegradation() {
@@ -1033,6 +986,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the degradation.
+	 *
 	 * @param degradation the degradation to set
 	 */
 	public void setDegradation(double degradation) {
@@ -1040,6 +995,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Gets the min ramp input.
+	 *
 	 * @return the minRampInput
 	 */
 	public double getMinRampInput() {
@@ -1047,6 +1004,8 @@ public class ResourceParameters {
 	}
 
 	/**
+	 * Sets the min ramp input.
+	 *
 	 * @param minRampInput the minRampInput to set
 	 */
 	public void setMinRampInput(double minRampInput) {
@@ -1087,5 +1046,62 @@ public class ResourceParameters {
 	 */
 	public void setMaxRampOutput(double maxRampOutput) {
 		this.maxRampOutput = maxRampOutput;
+	}
+
+	/**
+	 * Checks if is secondary resource.
+	 * default = false
+	 *
+	 * @return the isSecondaryResource
+	 */
+	public boolean isSecondaryResource() {
+		return isSecondaryResource;
+	}
+
+	/**
+	 * Sets the secondary resource.
+	 *
+	 * @param isSecondaryResource the isSecondaryResource to set
+	 */
+	public void setSecondaryResource(boolean isSecondaryResource) {
+		this.isSecondaryResource = isSecondaryResource;
+	}
+
+	/**
+	 * Gets the primary resource.
+	 *
+	 * @return the primaryResource
+	 */
+	public String getPrimaryResource() {
+		return primaryResource;
+	}
+
+	/**
+	 * Sets the name primary resource.
+	 *
+	 * @param primaryResource the primaryResource to set
+	 */
+	public void setPrimaryResource(String primaryResource) {
+		this.primaryResource = primaryResource;
+	}
+
+	/**
+	 * Gets the capacity set points.
+	 * Key: timestep
+	 * Value: setpoint
+	 *
+	 * @return the capacitySetPoints
+	 */
+	public HashMap<Integer, Double> getCapacitySetPoints() {
+		return capacitySetPoints;
+	}
+
+	/**
+	 * Sets the capacity set points.
+	 *
+	 * @param capacitySetPoints the capacitySetPoints to set
+	 */
+	public void setCapacitySetPoints(HashMap<Integer, Double> capacitySetPoints) {
+		this.capacitySetPoints = capacitySetPoints;
 	}
 }

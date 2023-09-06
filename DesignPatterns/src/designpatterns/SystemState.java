@@ -24,10 +24,10 @@ public class SystemState {
 	int latency; 
 	
 	/** The min power. */
-	double minPower; 
+	double minPowerInput; 
 	
 	/** The max power. */
-	double maxPower; 
+	double maxPowerInput; 
 	
 	/** The max power output. */
 	double maxPowerOutput = Double.MAX_VALUE;
@@ -165,8 +165,8 @@ public class SystemState {
 	 *
 	 * @return the minPower
 	 */
-	public double getMinPower() {
-		return minPower;
+	public double getMinPowerInput() {
+		return minPowerInput;
 	}
 
 	/**
@@ -175,7 +175,7 @@ public class SystemState {
 	 * @param minPower the minPower to set
 	 */
 	public void setMinPower(double minPower) {
-		this.minPower = minPower;
+		this.minPowerInput = minPower;
 	}
 
 	/**
@@ -183,8 +183,8 @@ public class SystemState {
 	 *
 	 * @return the maxPower
 	 */
-	public double getMaxPower() {
-		return maxPower;
+	public double getMaxPowerInput() {
+		return maxPowerInput;
 	}
 
 	/**
@@ -193,7 +193,7 @@ public class SystemState {
 	 * @param maxPower the maxPower to set
 	 */
 	public void setMaxPower(double maxPower) {
-		this.maxPower = maxPower;
+		this.maxPowerInput = maxPower;
 	}
 
 	/**

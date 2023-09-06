@@ -79,7 +79,6 @@ public class ElectrolyzerOptimization2 {
 		input1.add(DesignPatterns.setPla(118.41,15.306, 38.15582, maxPowerEl));
 
 		resource1.getPlaList().add(input1);
-//		resource1.getPlaList().add(input1);
 		
 		double minRamp = 0;
 		double maxRamp = 0.8*maxPowerEl/DesignPatterns.getTimeInterval(); 
@@ -112,6 +111,10 @@ public class ElectrolyzerOptimization2 {
 		resource2.getPlaList().add(input1);
 
 		resource2.setNumberOfInputs(resource2.getPlaList().size());
+		
+//		resource2.setSecondaryResource(true);
+//		resource2.setPrimaryResource("Electrolyzer1");
+		
 		resource2.addSystemStateWithMaxPowerOutput(0, "off", 4, NOLIMIT, new int[] {1}, 0, 0, 0);
 		resource2.addSystemStateWithMaxPowerOutput(1, "start-up", 2, 2, new int[] {2}, 0, 7.84, 0);
 		resource2.addSystemState(2, "operation", 4, NOLIMIT, new int[] {3, 4}, 7.84, maxPowerEl);
@@ -130,11 +133,10 @@ public class ElectrolyzerOptimization2 {
 		resource3.setResourceAsStorage(true);
 		resource3.setEfficiencyInputStorage(1);
 		resource3.setEfficiencyOutputStorage(1);
-		resource3.setInitalCapacity(2000);
-		resource3.setCapacityTarget(2000);
-		resource3.setCapacityTargetComparator("Ge");
 		resource3.setMaximumStorageCapacity(4000);
-//		resource3.setStaticEnergyLoss(10);
+		resource3.getCapacitySetPoints().put(0, (double) 2000);
+		resource3.getCapacitySetPoints().put(DesignPatterns.getArrayLength(), (double) 2000);
+		resource3.setStaticEnergyLoss(10);
 		//		resource3.setDynamicEnergyLoss(0);
 		//		resource3.setReferenceDynamicEnergyLoss(resource3.maximumStorageCapacity);
 		DesignPatterns.getResourceParameters().add(resource3);
