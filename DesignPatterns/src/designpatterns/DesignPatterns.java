@@ -411,6 +411,7 @@ public class DesignPatterns {
 					}
 					powerOutputSum = getCplex().sum(powerOutputSum, powerOutputSumInput);
 				}
+				// poweroutput = sum of all poweroutputs_i
 				getCplex().addEq(powerOutputResource[timestep], powerOutputSum);
 			}
 		}
