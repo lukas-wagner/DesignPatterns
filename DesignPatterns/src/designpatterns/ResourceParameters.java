@@ -60,6 +60,15 @@ public class ResourceParameters {
 
 	/** The latency of output. */
 	int latencyOfOutput;
+	
+	/** The target. */
+	double target;
+	
+	/** The target flow. */
+	String targetFlow; 
+	
+	/** The numer of input of target. */
+	int numerOfInputOfTarget; 
 
 	/** The system states. */
 	List<SystemState> systemStates = new ArrayList<SystemState>();
@@ -1104,4 +1113,69 @@ public class ResourceParameters {
 	public void setCapacitySetPoints(HashMap<Integer, Double> capacitySetPoints) {
 		this.capacitySetPoints = capacitySetPoints;
 	}
+
+	/**
+	 * Gets the target.
+	 *
+	 * @return the target
+	 */
+	public double getTarget() {
+		return target;
+	}
+
+	/**
+	 * Sets the target.
+	 *
+	 * @param target the target to set
+	 */
+	public void setTarget(double target) {
+		this.target = target;
+	}
+
+	/**
+	 * Gets the target flow.
+	 *
+	 * @return the targetFlow
+	 */
+	public String getTargetFlow() {
+		return targetFlow;
+	}
+
+	/**
+	 * Sets the target flow.
+	 *
+	 * @param targetFlow the targetFlow to set
+	 */
+	public void setTargetFlow(String targetFlow) {
+		this.targetFlow = targetFlow;
+	}
+	
+	
+	/**
+	 * Sets the target and flow.
+	 *
+	 * @param target the target
+	 * @param targetFlow the target flow
+	 * @param numerOfInputOfTarget the numer of input of target
+	 */
+	public void setTargetAndFlow (double target, String targetFlow, int numerOfInputOfTarget) {
+		this.target = target;
+		this.targetFlow = targetFlow;
+		this.numerOfInputOfTarget = numerOfInputOfTarget;
+	}
+
+	/**
+	 * @return the numerOfInputOfTarget
+	 */
+	public int getNumerOfInputOfTarget() {
+		return numerOfInputOfTarget;
+	}
+
+	/**
+	 * @param numerOfInputOfTarget the numerOfInputOfTarget to set
+	 */
+	public void setNumerOfInputOfTarget(int numerOfInputOfTarget) {
+		this.numerOfInputOfTarget = numerOfInputOfTarget;
+	}
+	
 }

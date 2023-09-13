@@ -2,6 +2,8 @@ package designpatterns;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -357,7 +359,7 @@ public class DesignPatterns {
 				// sum binaries[i] = 1 part 1
 
 				for (int numberOfInput = 0; numberOfInput < getResourceParameters().get(indexOfResource).getPlaList().size(); numberOfInput++) {
-//					IloNumExpr powerOutputSumInput = getCplex().numExpr();
+					//					IloNumExpr powerOutputSumInput = getCplex().numExpr();
 					IloNumVar powerOutputSumInput = getCplex().numVar(0, Double.MAX_VALUE);
 					IloNumExpr binarySum = getCplex().numExpr();
 					IloNumExpr powerInputSum = getCplex().numExpr();
@@ -416,8 +418,43 @@ public class DesignPatterns {
 			}
 		}
 		System.out.println("Input-output successfully created for resource " + nameOfResource);
+		
+		if (getResourceParameters().get(indexOfResource).getTarget() != 0) {
+			setTargetForDecisionVariable(nameOfResource);
+			System.out.println("Target set");
+		}
 	}
 
+
+	/**
+	 * Sets the target for decision variable.
+	 *
+	 * @param nameOfResource the new target for decision variable
+	 * @throws IloException the ilo exception
+	 */
+	public static void setTargetForDecisionVariable (String nameOfResource) throws IloException {
+		// find id by name
+		int indexOfResource = -1;
+		indexOfResource = findIndexByName(nameOfResource);
+		if (indexOfResource==-1) System.err.println("Resource not found in list of getResourceParameters()!");
+		
+		double target = getResourceParameters().get(indexOfResource).getTarget();
+		String targetFlow = getResourceParameters().get(indexOfResource).getTargetFlow();
+		int numberOfInput = getResourceParameters().get(indexOfResource).getNumerOfInputOfTarget();
+		IloNumExpr variableSum = getCplex().numExpr();
+		for (int timeStep = 0; timeStep < getArrayLength(); timeStep++) {
+			variableSum = getCplex().sum(
+					variableSum, 
+					getCplex().prod(
+							getTimeInterval(), 
+							// decVar
+							getDecisionVariableFromVector(nameOfResource, targetFlow, numberOfInput, POWER)[timeStep]
+							)
+					);
+		}
+		getCplex().addEq(variableSum, target);
+
+	}
 	/**
 	 * Generate system state selection by power limits.
 	 * System state selection always based on 1st input!
@@ -941,10 +978,15 @@ public class DesignPatterns {
 	 * @param filePath the file path
 	 */
 	public static void writeResultsToFile (double[][] contentToWrite, String fileName, String header, String filePath) {
-		String date = Double.toString(System.currentTimeMillis());
+		// Get the current date and time
+		LocalDateTime currentDateTime = LocalDateTime.now();
+		// Define the desired date and time format
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+		// Format the current date and time using the formatter
+		String formattedDateTime = currentDateTime.format(formatter);
 		try {
 			//	double currentTime = System.currentTimeMillis(); 
-			FileWriter myWriter = new FileWriter(filePath+fileName+date+".csv");
+			FileWriter myWriter = new FileWriter(filePath+fileName+"_"+formattedDateTime+".csv");
 			myWriter.write("id;"+header);
 			myWriter.write("\n");
 			for (int i = 0; i < contentToWrite.length; i++) {

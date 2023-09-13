@@ -4,7 +4,7 @@ package designpatterns;
  * The Class PiecewiseLinearApproximation.
  */
 public class PiecewiseLinearApproximation {
-	
+		
 	/** The lower bound. */
 	double lowerBound; 
 	
