@@ -17,6 +17,12 @@ public class SystemState {
 	/** The min state duration. */
 	double minStateDuration; 
 	
+	/** The max state duration in time. */
+	double maxStateDurationInH; 
+	
+	/** The min state duration in time. */
+	double minStateDurationInH; 
+	
 	/** The follower states. */
 	int[] followerStates;
 	
@@ -318,5 +324,33 @@ public class SystemState {
 	 */
 	public void setInputIsEqualToOutput(boolean inputIsOutput) {
 		this.inputIsEqualToOutput = inputIsOutput;
+	}
+
+	/**
+	 * @return the maxStateDurationInH
+	 */
+	public double getMaxStateDurationInH() {
+		return maxStateDurationInH;
+	}
+
+	/**
+	 * @param maxStateDurationInH the maxStateDurationInH to set
+	 */
+	public void setMaxStateDurationInH(double maxStateDurationInH) {
+		this.maxStateDurationInH = maxStateDurationInH;
+	}
+
+	/**
+	 * @return the minStateDurationInH
+	 */
+	public double getMinStateDurationInH() {
+		return minStateDurationInH;
+	}
+
+	/**
+	 * @param minStateDurationInH the minStateDurationInH to set
+	 */
+	public void setMinStateDurationInH(double minStateDurationInH) {
+		this.minStateDurationInH = minStateDurationInH;
 	}
 }
