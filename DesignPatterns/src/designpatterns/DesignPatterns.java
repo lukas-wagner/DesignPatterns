@@ -28,7 +28,7 @@ import ilog.cplex.*;
 public class DesignPatterns {
 
 	/** The global cplex. */
-	static	IloCplex globalCplex = null; 
+	public static	IloCplex globalCplex = null; 
 
 	/** The solving times. */
 	static double[] solvingTimes = new double [4]; 
@@ -782,7 +782,7 @@ public class DesignPatterns {
 					getCplex().addEq(maxStateOfCharge[timeStep],
 							getCplex().diff(
 									maxStateOfCharge[timeStep-1],
-									getResourceParameters().get(indexOfResource).getDegradation()
+									getResourceParameters().get(indexOfResource).getDegradation()*getTimeInterval()
 									)
 							);
 					getCplex().addLe(stateOfCharge[timeStep],
